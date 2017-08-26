@@ -33,11 +33,11 @@ public class PugUser
 
 	public string GetDisplayRanking()
 	{
-		if (DatabaseUser.Matches() >= 8)
+		if (DatabaseUser.GamesPlayed() >= 8)
 		{
 			return DatabaseUser.SkillRating.ToString("F0");
 		}
-		else if(DatabaseUser.Matches() >= 3)
+		else if(DatabaseUser.GamesPlayed() >= 3)
 		{
 			if (DatabaseUser.SkillRating >= 1700)
 			{

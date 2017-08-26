@@ -39,7 +39,7 @@ namespace OWPugs.Models
 			return datastore.db.Matches.Where(x => matchesId.Contains(x.Id)).ToList(); 
 		}
 
-		public int Matches()
+		public int GamesPlayed()
 		{
 			return Wins + Loses;
 		}
