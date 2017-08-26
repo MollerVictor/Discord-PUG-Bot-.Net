@@ -14,6 +14,8 @@ using System.IO;
 using System.Diagnostics;
 using Glicko2;
 using Microsoft.Extensions.Configuration;
+using LBPugs.Properties;
+using Microsoft.Extensions.Options;
 
 public class PugModule : ModuleBase<SocketCommandContext>
 {
@@ -39,10 +41,10 @@ public class PugModule : ModuleBase<SocketCommandContext>
 	private AppConfig _appConfig;
 
 
-	public PugModule(DataStore ds, AppConfig appConfig)
+	public PugModule(DataStore ds, IOptions<AppConfig> appConfig)
 	{
 		datastore = ds;
-		_appConfig = appConfig;
+		_appConfig = appConfig.Value;
 	}
 
 
@@ -54,7 +56,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		if (datastore.CurrentPugState != DataStore.PugState.WaitingForPlayer)
 		{
-			await ReplyAsync("Wait until they have finished picking teams on the last pug, before typing .add");
+			await ReplyAsync(string.Format(Resources.ErrorWaitUntilTheyFinishedPicking, Context.User.GetName()));
 			return;
 		}
 
@@ -72,7 +74,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		if (datastore.CurrentPugState != DataStore.PugState.WaitingForPlayer)
 		{
-			await ReplyAsync($"**{Context.User.GetName()}**, Wait until they have finished picking teams on the last pug, before typing .add");
+			await ReplyAsync(string.Format(Resources.ErrorWaitUntilTheyFinishedPicking, Context.User.GetName()));
 			return;
 		}
 
@@ -91,7 +93,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 				await AddToQueueList(datastore._naSignupUsers, "NA");
 				break;
 			default:
-				string replayString = string.Format($"{Context.User.GetName()}, Wrong region use .a <na/eu/both>.");
+				string replayString = string.Format(Resources.ErrorWrongRegionAdd, Context.User.GetName());
 				await ReplyAsync(replayString);
 
 				return;
@@ -106,14 +108,14 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		if (signupList.Count >= MAX_PLAYERS)
 		{
-			string replayString = $"**{Context.User.GetName()}**Pug is full.";
+			string replayString = string.Format(Resources.ErrorPugIsFull, Context.User.GetName());
 			await ReplyAsync(replayString);
 		}
 		else
 		{
 			if (signupList.Select(x => x.IUser.Id).Contains(user.Id))
 			{
-				string replayString = $"{Context.User}, you are already signed up. {regionText} {signupList.Count}/{MAX_PLAYERS} players.";
+				string replayString = string.Format(Resources.ErrorYouAreAlreadySignedUp, Context.User, regionText,signupList.Count,MAX_PLAYERS);
 				await ReplyAsync(replayString);
 			}
 			else
@@ -122,7 +124,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 				signupList.Add(pugUser);
 
-				string replayString = $"**{regionText}** {signupList.Count}/{MAX_PLAYERS} players. **{Context.User.GetName()}** joined the queue.\n" + string.Join("\n", signupList.Select(x => $"**{x.IUser.GetName()}** Rating: {x.GetDisplayRanking()}"));
+				string replayString = string.Format(Resources.PlayerJoinedTheQueue, regionText, signupList.Count, MAX_PLAYERS,Context.User.GetName()) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 
 				await ReplyAsync(replayString);
 
@@ -134,7 +136,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 					{
 						Region = regionText == "EU" ? Region.EU : Region.NA
 					};
-					string replayString2 = $"**{regionText}** Pug is now full, everyone ready up. (.ready)";
+					string replayString2 = string.Format(Resources.PugIsNowFull, regionText);
 
 					datastore.CurrentPugState = DataStore.PugState.Readyup;
 
@@ -191,9 +193,9 @@ public class PugModule : ModuleBase<SocketCommandContext>
 				await RemoveFromQueueList(datastore._naSignupUsers, "NA");
 				break;
 			default:
-				string replayString = string.Format($"{Context.User.GetName()}, Wrong region use .l <na/eu/both>.");
+				string replayString = string.Format(Resources.ErrorWrongRegionLeave, Context.User.GetName());
 				await ReplyAsync(replayString);
-
+				
 				return;
 		}
 
@@ -208,12 +210,12 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		if (removed)
 		{
-			string replayString = $"**{Context.User.GetName()}**, you have left the pug. **{regionText}** {signupList.Count}/{MAX_PLAYERS} players.\n" + string.Join("\n", signupList.Select(x => $"**{x.IUser.GetName()}**"));
+			string replayString = string.Format(Resources.PlayerLeftTheQueue, Context.User.GetName(),regionText,signupList.Count,MAX_PLAYERS) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 			await ReplyAsync(replayString);
 		}
 		else
 		{
-			string replayString = $"**{Context.User.GetName()}**, You can't leave since you are not in the {regionText} queue. {regionText} {signupList.Count}/{MAX_PLAYERS}\n" + string.Join("\n", signupList.Select(x => $"**{x.IUser.GetName()}**"));
+			string replayString = string.Format(Resources.ErrorLeavePugYouareNotIn, Context.User.GetName(),regionText, signupList.Count, MAX_PLAYERS) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 
 			// ReplyAsync is a method on ModuleBase
 			await ReplyAsync(replayString);
@@ -251,11 +253,9 @@ public class PugModule : ModuleBase<SocketCommandContext>
 			datastore._signupUsers.RemoveAll(x => !x.IsReady);
 			datastore._signupUsers.ForEach(x => x.IsReady = false);
 
-			string replayString2 = "Removing users that didn't ready up.\n";
+			string replayString = string.Format(Resources.RemovingPlayerThatIsNotReady, datastore._signupUsers.Count, MAX_PLAYERS) + string.Join("\n", datastore._signupUsers.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 
-			string replayString = string.Format(" {0}/{1} players.\n", datastore._signupUsers.Count, MAX_PLAYERS) + string.Join("\n", datastore._signupUsers.Select(x => x.IUser.Mention + " Rating:" + x.GetDisplayRanking()));
-
-			ReplyAsync(replayString2 + replayString);
+			ReplyAsync(replayString);
 
 			SetChannelNameToCurrentUsers();
 		}
@@ -269,7 +269,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		if (datastore.CurrentPugState != DataStore.PugState.Readyup)
 		{
-			await ReplyAsync($"**{Context.User.GetName()}**, You can't ready up at this time");
+			await ReplyAsync(string.Format(Resources.ErrorCantReadyUpRightNow, Context.User.GetName()));
 			return;
 		}
 			
@@ -286,44 +286,41 @@ public class PugModule : ModuleBase<SocketCommandContext>
 			{
 				datastore.CurrentPugState = DataStore.PugState.PickingPlayers;
 
-				string everyoneReady = "Everyone is ready, randoming captains.";
-
-				//TODO This dosen't remove the players for some reason.
+				//TODO This dosen't remove the players for some reason. This is fixed I think?
 				datastore._euSignupUsers = datastore._euSignupUsers.Where(x => !datastore._signupUsers.Select(y => y.DatabaseUser.Id).Contains(x.DatabaseUser.Id)).ToList(); // Except(x => x. datastore._signupUsers).ToList();
 				datastore._naSignupUsers = datastore._naSignupUsers.Where(x => !datastore._signupUsers.Select(y => y.DatabaseUser.Id).Contains(x.DatabaseUser.Id)).ToList();
 
-				await ReplyAsync(everyoneReady);				
+				await ReplyAsync(Resources.EveryoneReady);				
 
 				await ChooseCaptains();
 			}
 			else
 			{
+				string replayString = string.Format(Resources.PleaseReadyUp, datastore._signupUsers.Count(x => x.IsReady), MAX_PLAYERS) + string.Join("\n", datastore._signupUsers.Where(x => x.IsReady == false).Select(x => x.IUser.Mention));
+				
 
-
-				string replayString = string.Format(" {0}/{1} players ready. Write .r to ready up.\n", datastore._signupUsers.Count(x => x.IsReady), MAX_PLAYERS) + string.Join("\n", datastore._signupUsers.Where(x => x.IsReady == false).Select(x => x.IUser.Mention));
-
-
-				// ReplyAsync is a method on ModuleBase
 				var readyMessage = await ReplyAsync(replayString);
 
+				//Delete the last ready up messagee, to avoid cluttering the chat
 				if (datastore.LastReadyMessage.Any())
 				{
 					await datastore.LastReadyMessage.Dequeue().DeleteAsync();
 				}
-
 				datastore.LastReadyMessage.Enqueue(readyMessage);
 			}
 		}
 		else
 		{
-			await ReplyAsync("You are not in the pug");
+			await ReplyAsync(Resources.ErrorYouAreNotInThePug);
 		}
 	}
 
 	public async Task ChooseCaptains()
 	{
+		//Tries to find captain that have alteast 15 games
 		var chooseableCapatins = datastore._signupUsers.Where(x => (x.DatabaseUser.Wins + x.DatabaseUser.Loses) >= 15);
 
+		//If it cant find 2 that can do that, just include everyone
 		if(chooseableCapatins.Count() < 2)
 		{
 			chooseableCapatins = datastore._signupUsers;
@@ -334,10 +331,12 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		var orderList = chooseableCapatins.OrderByDescending(x => x.DatabaseUser.SkillRating).Take(numOfChoosable);
 
 		Random random = new Random();
-		int indexCapt1 = random.Next(orderList.Count());
 
+		//First captain is random between the 5 highest ranked players
+		int indexCapt1 = random.Next(orderList.Count());
 		PugUser capt1 = orderList.ToList()[indexCapt1];
 
+		//Second captain is the one cloest in rating to the first captain.
 		int indexAbove = indexCapt1 - 1;
 		int indexBelow = indexCapt1 + 1;
 
@@ -386,8 +385,6 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		datastore._captain1 = capt1;
 		datastore._captain2 = capt2;
 
-		//datastore._currentTeamPicking = DataStore.Teams.TeamOne;
-
 
 		int curId = 1;
 		datastore._signupUsers.Where(x => x.IsPicked == false).ToList().ForEach(x =>
@@ -396,9 +393,11 @@ public class PugModule : ModuleBase<SocketCommandContext>
 			curId++;
 		});
 
-		await ReplyAsync($"Captain 1: {capt1.IUser.Mention} Skill: {capt1.GetDisplayRanking()}\nCaptain 2: {capt2.IUser.Mention} Skill: {capt2.GetDisplayRanking()}");
+		await ReplyAsync(string.Format(Resources.CaptainsWithSkill, capt1.IUser.Mention, capt1.GetDisplayRanking(), capt2.IUser.Mention, capt2.GetDisplayRanking()));
 
-		await ReplyAsync("(.pick <number>)\n" + string.Join("\n", datastore._signupUsers.Where(x => x.IsPicked == false).Select(x => $"**{x.PickID}.** {x.IUser.GetName()} Rating: **{x.GetDisplayRanking()}** {x.DatabaseUser.Info ?? ""}")) + "\n" + capt1.IUser.Mention + " turn to pick.");
+		await ReplyAsync(Resources.PickNumber +
+			string.Join("\n", datastore._signupUsers.Where(x => x.IsPicked == false).Select(x => string.Format(Resources.UserPickingInfo, x.PickID, x.IUser.GetName(), x.GetDisplayRanking(), x.DatabaseUser.Info ?? ""))) +
+			"\n" + string.Format(Resources.PlayersTurnToPick, capt1.IUser.Mention));
 	}
 
 
@@ -423,8 +422,6 @@ public class PugModule : ModuleBase<SocketCommandContext>
 				wannaPickUser.IsPicked = true;
 				wannaPickUser.Team = currentTeamPick;
 
-				//datastore._currentTeamPicking = datastore._currentTeamPicking == DataStore.Teams.TeamOne ? DataStore.Teams.TeamTwo : DataStore.Teams.TeamOne;
-
 				int unpickedPlayers = datastore._signupUsers.Count(x => x.IsPicked == false);
 
 				if (unpickedPlayers == 1)
@@ -444,17 +441,17 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 					var nextCaptainToPick = nextTeamsPick == DataStore.Teams.TeamOne ? datastore._captain1 : datastore._captain2;
 
-					await ReplyAsync($"{nextCaptainToPick.IUser.Mention} turn to pick.\n" + string.Join("\n", datastore._signupUsers.Where(x => x.IsPicked == false).Select(x => $"**{x.PickID}.** {x.IUser.GetName()} Rating: **{x.GetDisplayRanking()}** {x.DatabaseUser.Info ?? ""}")));
+					await ReplyAsync(string.Format(Resources.PlayersTurnToPick, nextCaptainToPick.IUser.Mention) + "\n" + string.Join("\n", datastore._signupUsers.Where(x => x.IsPicked == false).Select(x => string.Format(Resources.UserPickingInfo, x.PickID, x.IUser.GetName(), x.GetDisplayRanking(), x.DatabaseUser.Info ?? ""))));
 				}
 			}
 			else
 			{
-				await ReplyAsync("Can't pick that player");
+				await ReplyAsync(Resources.ErrorCantPickThatPlayer);
 			}
 		}
 		else
 		{
-			await ReplyAsync("You are not allowed to pick.");
+			await ReplyAsync(Resources.ErrorYouAreNotAllowedToPick);
 		}
 	}
 
@@ -468,13 +465,13 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		datastore.CurrentPug.VoteableMaps = datastore.AllMaps.OrderBy(x => rnd.Next()).Take(3).ToList();
 
-		string team1String = string.Join("\n", datastore._signupUsers.Where(x => x.Team == DataStore.Teams.TeamOne).Select(x => x.IUser.GetName() + " " + x.GetDisplayRanking()));
-		string team2String = string.Join("\n", datastore._signupUsers.Where(x => x.Team == DataStore.Teams.TeamTwo).Select(x => x.IUser.GetName() + " " + x.GetDisplayRanking()));
+		string team1String = string.Join("\n", datastore._signupUsers.Where(x => x.Team == DataStore.Teams.TeamOne).Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
+		string team2String = string.Join("\n", datastore._signupUsers.Where(x => x.Team == DataStore.Teams.TeamTwo).Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 
-		string replayString = "**Team 1:**\n" + team1String + "\n**Team 2:**\n" + team2String;
+		string replayString = string.Format(Resources.TeamLineups, team1String, team2String);
 
 		int i = 1;
-		replayString += $"\n**Vote for map, you have {MAP_VOTE_TIME}sec.** (.vote <number>)\n" + string.Join("\n", datastore.CurrentPug.VoteableMaps.Select(x =>  $"{i++}. {x.Name}"));
+		replayString += Resources.VoteMap + string.Join("\n", datastore.CurrentPug.VoteableMaps.Select(x =>  $"{i++}. {x.Name}"));
 
 		await ReplyAsync(replayString);
 		
@@ -498,7 +495,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		datastore.GameModeVoteTimer = new Timer(new TimerCallback(GameModeVoteTimerProcAsync), autoEvent, GAMEMODE_VOTE_TIME * 1000, 0);
 
-		string replayString = "\n Map: ** " + datastore.CurrentPug.MapPicked.Name + $" ** \n**Vote for gamemode, you have {GAMEMODE_VOTE_TIME}sec.** (.vote <number>)\n" + string.Join("\n", datastore.AllGameModes.Select(x => $"{x.Id}. {x.Name}"));
+		string replayString = string.Format(Resources.MapVoteFinishedVoteForGameMode,datastore.CurrentPug.MapPicked.Name, GAMEMODE_VOTE_TIME) + string.Join("\n", datastore.AllGameModes.Select(x => $"{x.Id}. {x.Name}"));
 
 		datastore.CurrentPugState = DataStore.PugState.GameModeVoting;
 
@@ -551,9 +548,9 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		string team1String = string.Join("\n", datastore._signupUsers.Where(x => x.Team == DataStore.Teams.TeamOne).Select(x => x.IUser.GetName() + " " + x.GetDisplayRanking()));
 		string team2String = string.Join("\n", datastore._signupUsers.Where(x => x.Team == DataStore.Teams.TeamTwo).Select(x => x.IUser.GetName() + " " + x.GetDisplayRanking()));
 
-		string replayString = "**Team 1:**\n" + team1String + "\n**Team 2:**\n" + team2String;
+		string replayString = string.Format(Resources.TeamLineups, team1String, team2String);
 
-		await ReplyAsync($"Voting ended. **{datastore.CurrentPug.Region.ToString()} {datastore.CurrentPug.MapPicked.Name} ({mostVotedGameMode.Name})** won the vote. Match Id: **{match.Id}**\n**GL HF**\nCaptains don't forget to enter match results after the match. (.result <win/lose>)\n" + replayString);
+		await ReplyAsync(string.Format(Resources.GameModeVoteFinished, datastore.CurrentPug.Region.ToString(), datastore.CurrentPug.MapPicked.Name, mostVotedGameMode.Name, match.Id) + replayString);
 
 		ResetPug();		
 	}
@@ -580,7 +577,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 					if(mapId <= 0 || mapId > datastore.CurrentPug.VoteableMaps.Count)
 					{
 				
-						await ReplyAsync($"{user.GetName()}, Invalid map number.");
+						await ReplyAsync(string.Format(Resources.ErrorInvaildMapNumber, user.GetName()));
 						
 					}
 					else
@@ -592,17 +589,17 @@ public class PugModule : ModuleBase<SocketCommandContext>
 							map.Votes++;
 							pugUser.HaveVotedForMap = true;
 
-							await ReplyAsync($"{user.GetName()}, voted for **{map.Name}**.");
+							await ReplyAsync(string.Format(Resources.PlayerVotedForMap, user.GetName(), map.Name));
 						}
 						else
 						{
-							await ReplyAsync($"{user.GetName()}, Invalid map number.");
+							await ReplyAsync(string.Format(Resources.ErrorInvaildMapNumber, user.GetName()));
 						}
 					}
 				}
 				else
 				{
-					await ReplyAsync($"{user.GetName()}, You have already voted for a map.");
+					await ReplyAsync(string.Format(Resources.ErrorAlreadyVotedForMap, user.GetName()));
 				}
 			}
 			else if(datastore.CurrentPugState == DataStore.PugState.GameModeVoting)
@@ -617,23 +614,23 @@ public class PugModule : ModuleBase<SocketCommandContext>
 						gameMode.Votes++;
 						pugUser.HaveVotedForGameMode = true;
 
-						await ReplyAsync($"{user.GetName()}, voted for **{gameMode.Name}**.");
+						await ReplyAsync(string.Format(Resources.PlayerVotedForMap, user.GetName(), gameMode.Name));
 					}
 					else
 					{
-						await ReplyAsync($"{user.GetName()}, Invalid map number.");
+						await ReplyAsync(string.Format(Resources.ErrorInvaildMapNumber, user.GetName()));
 					}
 				}
 				else
 				{
-					await ReplyAsync($"{user.GetName()}, You have already voted for a map.");
+					await ReplyAsync(string.Format(Resources.ErrorAlreadyVotedForMap, user.GetName()));
 				}
 			}
 
 		}		
 		else
 		{
-			await ReplyAsync($"{user.GetName()}, Only people in the pug can vote for map/gamemode.");
+			await ReplyAsync(string.Format(Resources.ErrorOnlyPeopleInThePugCanVote, user.GetName()));
 		}
 	}
 
@@ -728,18 +725,22 @@ public class PugModule : ModuleBase<SocketCommandContext>
 				double winningTeamAvgSkillRating = usersWon.Sum(x => x.PreviousSkillRating) / usersWon.Count;
 				double loosingTeamAvgSkillRating = usersLost.Sum(x => x.PreviousSkillRating) / usersLost.Count;
 
-				string userRatingsChange = $"Avg SR: {winningTeamAvgSkillRating.ToString("F0")}\n" +  string.Join("\n", usersWon.Select(x => $"{x.UserName} {x.SkillRating.ToString("F0")} ({(x.SkillRating - x.PreviousSkillRating).ToString("F0")})")) + "\n\n" + $"Avg SR: {loosingTeamAvgSkillRating.ToString("F0")}\n" + string.Join("\n", usersLost.Select(x => $"{x.UserName} {x.SkillRating.ToString("F0")} ({(x.SkillRating - x.PreviousSkillRating).ToString("F0")})"));
+				string userRatingsChange = $"Avg SR: {winningTeamAvgSkillRating.ToString("F0")}\n" +  
+					string.Join("\n", usersWon.Select(x => $"{x.UserName} {x.SkillRating.ToString("F0")} ({(x.SkillRating - x.PreviousSkillRating).ToString("F0")})")) 
+					+ "\n\n" + 
+					$"Avg SR: {loosingTeamAvgSkillRating.ToString("F0")}\n" + 
+					string.Join("\n", usersLost.Select(x => $"{x.UserName} {x.SkillRating.ToString("F0")} ({(x.SkillRating - x.PreviousSkillRating).ToString("F0")})"));
 
-				await ReplyAsync($"Match finished **{ winTeam.ToString()} Won!** {match.Id} {match.Map.Name} ({match.GameMode.Name}) {match.Region.ToString()}\n{ userRatingsChange}");
+				await ReplyAsync(string.Format(Resources.MatchFinished, winTeam.ToString(),match.Id, match.Map.Name, match.GameMode.Name, match.Region.ToString(), userRatingsChange));
 			}			
 			else
 			{
-				await ReplyAsync($"{Context.User.GetName()}, Only captains can enter match results.");
+				await ReplyAsync(string.Format(Resources.ErrorOnlyCaptainsCanEnterResult,Context.User.GetName()));
 			}
 		}
 		else
 		{
-			await ReplyAsync("\"Win\" if you team won, and \"Lose\" if your team lost. It's not that hard.");
+			await ReplyAsync(Resources.ErrorResultWinnerWrong);
 		}	
 	}
 
@@ -820,7 +821,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 	{
 		ResetPug();
 
-		await ReplyAsync("**Pug canceled**");
+		await ReplyAsync(Resources.PugCanceled);
 	}
 
 	[Command("adminreportscore"), AllowedChannelsService]

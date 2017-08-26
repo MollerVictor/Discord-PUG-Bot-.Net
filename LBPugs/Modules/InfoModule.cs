@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using LBPugs.Properties;
 
 public class InfoModule : ModuleBase<SocketCommandContext>
 {
@@ -23,7 +23,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 	[Alias("command", "commands", "help")]
 	public async Task PugCommands()
 	{
-		await ReplyAsync("**Dices Pug Bot\nStats Website:** http://dpl.victormoller.com/ \n**To sign up for a pug write .add\nCommands:** \n.help\n.status\n.userinfo <username>\n.setinfo <info>\n.add\n.remove\n.ready\n.pick <player>\n.vote <map/gamemode>\n.result <win/lose/cancel>\n.lookingforteam\n.top10\n.noteamplayers\n.nolifer\n.gamemodestats\n.mapstats");
+		await ReplyAsync(Resources.HelpInfo);
 	}
 	
 	[Command("status"), Summary("Get pug status."), AllowedChannelsService]
@@ -37,13 +37,14 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 			var team1Players = pug.GetTeam1Users(datastore);
 			var team2Players = pug.GetTeam2Users(datastore);
 
-			string team1String = string.Join("\n", team1Players.Select(x =>	$"{x.UserName} **{x.SkillRating.ToString("F0")}**" + (string.IsNullOrWhiteSpace(x.Info) ? "" : $"`{x.Info}`") ));
+			string team1String = string.Join("\n", team1Players.Select(x => string.Format(Resources.UserPickingInfo, x.UserName, x.SkillRating.ToString("F0"),(string.IsNullOrWhiteSpace(x.Info) ? "" : $"`{x.Info}`") )));
 
-			string team2String = string.Join("\n", team2Players.Select(x => $"{x.UserName} **{x.SkillRating.ToString("F0")}**"  + (string.IsNullOrWhiteSpace(x.Info) ? "" : $"`{ x.Info}`")));
+			string team2String = string.Join("\n", team2Players.Select(x => string.Format(Resources.UserPickingInfo, x.UserName, x.SkillRating.ToString("F0"), (string.IsNullOrWhiteSpace(x.Info) ? "" : $"`{x.Info}`"))));
 
 
-			addString += $"\n**Match: {pug.Id} {pug.Region.ToString()}** Duration: {(DateTime.UtcNow - pug.PlayedDate).TotalMinutes.ToString("F0")}min\n";
-			addString += "**Team 1:**\n" + team1String + "\n**Team 2:**\n" + team2String + "\n";
+			addString += string.Format(Resources.MatchInfo, pug.Id, pug.Region.ToString(), (DateTime.UtcNow - pug.PlayedDate).TotalMinutes.ToString("F0"));
+		
+			addString += string.Format(Resources.TeamLineups,team1String, team2String);
 		}
 
 		await ReplyAsync(datastore.CurrentPugState.ToString() + "\n" + addString);
@@ -71,7 +72,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
 		string userInfoText = string.IsNullOrWhiteSpace(infoUser.Info) ? "" : $"\n({infoUser.Info})";
 
-		string replayString = $"**{userInfo.Username}**\n**Rating:** {infoUser.SkillRating.ToString("F0")} (±{infoUser.RatingsDeviation.ToString("F0")})\n**Wins:** {infoUser.Wins}\n**Losses:** {infoUser.Loses}\n**Wins as captain:** {infoUser.WinsAsCaptain}\n**Loses as captain:** {infoUser.LosesAsCaptain}{userInfoText}\n**Looking for a team?:** {infoUser.LookingForTeam.ToString()}";
+		string replayString = string.Format(Resources.PlayerFullInfo, userInfo.Username, infoUser.SkillRating.ToString("F0"), infoUser.RatingsDeviation.ToString("F0"), infoUser.Wins, infoUser.Loses, infoUser.WinsAsCaptain, infoUser.LosesAsCaptain, userInfoText, infoUser.LookingForTeam.ToString());
 
 		Context.User.SendMessageAsync(replayString);
 	}
@@ -87,7 +88,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
 		if (infoText.Length > 75)
 		{
-			userInfo.SendMessageAsync($"Userinfo to long.");
+			userInfo.SendMessageAsync(Resources.ErrorUserInfoToLong);
 		}
 		else
 		{
@@ -98,7 +99,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
 			await datastore.db.SaveChangesAsync();
 
-			userInfo.SendMessageAsync($"Userinfo updated.");
+			userInfo.SendMessageAsync(Resources.UserInfoUpdated);
 		}
 	}
 
@@ -111,8 +112,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 		var userInfo = Context.User;
 		if (steamId.Length > 80)
 		{
-			await ReplyAsync($"SteamId to long.");
-			userInfo.SendMessageAsync($"SteamId to long.");
+			userInfo.SendMessageAsync(Resources.ErrorSteamIDToLong);
 		}
 		else
 		{
@@ -123,7 +123,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
 			await datastore.db.SaveChangesAsync();
 
-			userInfo.SendMessageAsync($"SteamId updated.");		
+			userInfo.SendMessageAsync(Resources.SteamIDUpdated);		
 		}
 	}
 
@@ -144,7 +144,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
 		await datastore.db.SaveChangesAsync();
 
-		userInfo.SendMessageAsync($"{Context.User.GetName()}, Looking for team: {newStatus.ToString()}");
+		userInfo.SendMessageAsync(string.Format(Resources.LookingForTeamUpdated, Context.User.GetName(), newStatus.ToString()));
 	}
 
 
@@ -153,9 +153,11 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 	[Alias("top10", "best")]
 	public async Task Top10()
 	{
-		var topUsers = datastore.db.Users.OrderByDescending(x => x.SkillRating).Where(x => x.Matches() >= 10).Take(10);
+		var topUsers = datastore.db.Users.OrderByDescending(x => x.SkillRating).Where(x => x.GamesPlayed() >= 10).Take(10);
 
-		await ReplyAsync("Top players:\n" + string.Join("\n", topUsers.Select(x => $"**{x.UserName}** Skill rating: {x.SkillRating.ToString("F0")} (±{x.RatingsDeviation.ToString("F0")})")));
+		string topPlayersInfo = string.Join("\n", topUsers.Select(x => string.Format(Resources.NameAndSkillAndDeviation, x.UserName, x.SkillRating.ToString("F0"), x.RatingsDeviation.ToString("F0"))));
+
+		await ReplyAsync(string.Format(Resources.InfoTopPlayers, topPlayersInfo));
 	}
 
 	[Command("mostgamesplayed"), AllowedChannelsService]
@@ -164,47 +166,47 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 	{
 		var topUsers = datastore.db.Users.OrderByDescending(x => (x.Wins + x.Loses)).Take(10);
 
-		await ReplyAsync("Most active players:\n" + string.Join("\n", topUsers.Select(x => $"**{x.UserName}** Games Played: {(x.Wins + x.Loses)}")));
+		string playersInfo = string.Join("\n", topUsers.Select(x => string.Format(Resources.NameAndGamesPlayed, x.UserName, x.GamesPlayed())));
+
+		await ReplyAsync(string.Format(Resources.InfoMostActivePlayers, playersInfo));
 	}
 
 	[Command("noteamsplayers"), AllowedChannelsService]
 	[Alias("l4t", "teamplayers", "findplayers", "findteammembers", "noteamplayers")]
 	public async Task PrintPlayersLookingForTeam()
 	{
-		var topUsers = datastore.db.Users.OrderByDescending(x => x.SkillRating).Where(x => x.LookingForTeam && x.Matches() >= 5).Take(20);
+		var topUsers = datastore.db.Users.OrderByDescending(x => x.SkillRating).Where(x => x.LookingForTeam && x.GamesPlayed() >= 5).Take(20);
 
-		await ReplyAsync("Players looking for team:\n" + string.Join("\n", topUsers.Select(x => $"**{x.UserName}** Skill rating: {x.SkillRating.ToString("F0")} (±{x.RatingsDeviation.ToString("F0")}) {x.Info}")));
+		string playersInfo = string.Join("\n", topUsers.Select(x => string.Format(Resources.PlayerLongInfo, x.UserName, x.SkillRating.ToString("F0"), x.RatingsDeviation.ToString("F0"), x.Info)));
+
+		await ReplyAsync(string.Format(Resources.InfoPlayersLookingForTeam, playersInfo)); 
 	}
 
 	[Command("mapstats"), AllowedChannelsService]
 	public async Task PrintMapStats()
 	{
-		string addString = "";
-
 		var allMatches = datastore.db.Matches.GroupBy(x => x.Map).OrderByDescending(x => x.Count());
 
-		addString += $"**Total games played:** {datastore.db.Matches.Count()}\n";
+		string mapsStats = "";
 		foreach (var map in allMatches)
 		{
-			addString += $"**{map.Key.Name}:** {map.Count()}\n";
+			mapsStats += $"**{map.Key.Name}:** {map.Count()}\n";
 		}
 
-		await ReplyAsync(addString);
+		await ReplyAsync(string.Format(Resources.InfoMapStats, datastore.db.Matches.Count(), mapsStats));
 	}
 
 	[Command("gamemodestats"), AllowedChannelsService]
 	public async Task PrintGameModeStats()
 	{
-		string addString = "";
-
 		var allMatches = datastore.db.Matches.GroupBy(x => x.GameMode).OrderByDescending(x => x.Count());
-
-		addString += $"**Total games played:** {datastore.db.Matches.Count()}\n";
+	
+		string gameModeStats = "";
 		foreach (var gameMode in allMatches)
 		{
-			addString += $"**{gameMode.Key.Name}:** {gameMode.Count()}\n";
+			gameModeStats += $"**{gameMode.Key.Name}:** {gameMode.Count()}\n";
 		}
 
-		await ReplyAsync(addString);
+		await ReplyAsync(string.Format(Resources.InfoMapStats, datastore.db.Matches.Count(), gameModeStats));
 	}
 }
