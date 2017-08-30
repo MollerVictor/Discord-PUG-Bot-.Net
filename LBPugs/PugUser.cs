@@ -47,10 +47,6 @@ public class PugUser
 			{
 				return "Unranked+";
 			}
-			else if (DatabaseUser.SkillRating <= 1400)
-			{
-				return "Unranked-";
-			}
 		}
 		
 		return "Unranked";
