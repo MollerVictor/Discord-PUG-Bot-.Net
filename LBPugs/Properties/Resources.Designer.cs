@@ -62,7 +62,8 @@ namespace LBPugs.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Captain 1: {0} Skill: {1}\nCaptain 2: {2} Skill: {3}.
+        ///   Looks up a localized string similar to Captain 1: {0} Skill: {1}
+        ///Captain 2: {2} Skill: {3}.
         /// </summary>
         internal static string CaptainsWithSkill {
             get {
@@ -324,7 +325,8 @@ namespace LBPugs.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to 
-        /// Map: ** {0} ** \n**Vote for gamemode, you have {1}sec.** (.vote &lt;number&gt;)
+        /// Map: ** {0} ** 
+        ///**Vote for gamemode, you have {1}sec.** (.vote &lt;number&gt;)
         ///.
         /// </summary>
         internal static string MapVoteFinishedVoteForGameMode {
@@ -533,7 +535,7 @@ namespace LBPugs.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to 
-        ///**Vote for map, you have {MAP_VOTE_TIME}sec.** (.vote &lt;number&gt;)
+        ///**Vote for map, you have {0}sec.** (.vote &lt;number&gt;)
         ///.
         /// </summary>
         internal static string VoteMap {

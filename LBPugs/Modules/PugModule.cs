@@ -471,7 +471,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		string replayString = string.Format(Resources.TeamLineups, team1String, team2String);
 
 		int i = 1;
-		replayString += Resources.VoteMap + string.Join("\n", datastore.CurrentPug.VoteableMaps.Select(x =>  $"{i++}. {x.Name}"));
+		replayString += string.Format(Resources.VoteMap, MAP_VOTE_TIME) + string.Join("\n", datastore.CurrentPug.VoteableMaps.Select(x =>  $"{i++}. {x.Name}"));
 
 		await ReplyAsync(replayString);
 		

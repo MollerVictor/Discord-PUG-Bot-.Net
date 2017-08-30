@@ -118,7 +118,8 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="CaptainsWithSkill" xml:space="preserve">
-    <value>Captain 1: {0} Skill: {1}\nCaptain 2: {2} Skill: {3}</value>
+    <value>Captain 1: {0} Skill: {1}
+Captain 2: {2} Skill: {3}</value>
   </data>
   <data name="ErrorAlreadyVotedForMap" xml:space="preserve">
     <value>{0}, You have already voted.</value>
@@ -177,7 +178,8 @@ Captains don't forget to enter match results after the match. (.result &lt;win/l
   </data>
   <data name="MapVoteFinishedVoteForGameMode" xml:space="preserve">
     <value>
- Map: ** {0} ** \n**Vote for gamemode, you have {1}sec.** (.vote &lt;number&gt;)
+ Map: ** {0} ** 
+**Vote for gamemode, you have {1}sec.** (.vote &lt;number&gt;)
 </value>
   </data>
   <data name="MatchFinished" xml:space="preserve">
@@ -231,7 +233,7 @@ Captains don't forget to enter match results after the match. (.result &lt;win/l
   </data>
   <data name="VoteMap" xml:space="preserve">
     <value>
-**Vote for map, you have {MAP_VOTE_TIME}sec.** (.vote &lt;number&gt;)
+**Vote for map, you have {0}sec.** (.vote &lt;number&gt;)
 </value>
   </data>
   <data name="ErrorSteamIDToLong" xml:space="preserve">
