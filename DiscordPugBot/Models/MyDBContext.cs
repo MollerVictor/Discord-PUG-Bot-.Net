@@ -3,11 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using System.IO;
+using System.Diagnostics;
 
 namespace OWPugs.Models
 {
-    public class MyDBContext : DbContext
-    {
+    public class MyDBContext : DbContext 
+	{
         public virtual DbSet<Maps> Maps { get; set; }
 		public virtual DbSet<GameModes> GameModes { get; set; }
 		public virtual DbSet<Users> Users { get; set; }
@@ -16,6 +19,23 @@ namespace OWPugs.Models
 
 		private AppConfig _appConfig;
 
+
+		//This should only be run when running "update-database"
+		public MyDBContext()
+		{
+			_appConfig = new AppConfig();
+			var conf = BuildConfig();
+
+			conf.GetSection("AppConfig").Bind(_appConfig);
+		}
+
+		private IConfigurationRoot BuildConfig()
+		{
+			return new ConfigurationBuilder()
+				.SetBasePath(Directory.GetCurrentDirectory())
+				.AddJsonFile("config.json")
+				.Build();
+		}
 
 		public MyDBContext(IOptions<AppConfig> appConfig)
 		{
@@ -26,6 +46,7 @@ namespace OWPugs.Models
         {
 			optionsBuilder.UseMySql(@_appConfig.ConnectionString);
 		}
+
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -101,5 +122,5 @@ namespace OWPugs.Models
 					.HasDefaultValueSql("0");
 			});
         }
-    }
+	}
 }
