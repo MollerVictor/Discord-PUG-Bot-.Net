@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using OWPugs.Models;
 
-namespace LBPugs.Migrations
+namespace DiscordPugBot.Migrations
 {
     [DbContext(typeof(MyDBContext))]
-    [Migration("20170811102439_glicko")]
-    partial class glicko
+    [Migration("20170806114115_GameModesAdded")]
+    partial class GameModesAdded
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -55,8 +55,6 @@ namespace LBPugs.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
-                    b.Property<int?>("GameModeId");
-
                     b.Property<int?>("MapId");
 
                     b.Property<int>("MatchState");
@@ -66,8 +64,6 @@ namespace LBPugs.Migrations
                     b.Property<int>("TeamWinner");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GameModeId");
 
                     b.HasIndex("MapId");
 
@@ -102,22 +98,15 @@ namespace LBPugs.Migrations
                         .HasColumnType("int(11)")
                         .HasDefaultValueSql("0");
 
-                    b.Property<double>("RatingsDeviation")
+                    b.Property<int>("SkillRating")
                         .ValueGeneratedOnAdd()
-                        .HasDefaultValueSql("350");
-
-                    b.Property<double>("SkillRating")
-                        .ValueGeneratedOnAdd()
-                        .HasDefaultValueSql("1500");
+                        .HasColumnType("int(11)")
+                        .HasDefaultValueSql("2000");
 
                     b.Property<string>("SteamId");
 
                     b.Property<string>("UserName")
                         .HasColumnType("varchar(128)");
-
-                    b.Property<double>("Volatility")
-                        .ValueGeneratedOnAdd()
-                        .HasDefaultValueSql("0.06");
 
                     b.Property<int>("Wins")
                         .ValueGeneratedOnAdd()
@@ -141,7 +130,7 @@ namespace LBPugs.Migrations
 
                     b.Property<bool>("IsCaptain");
 
-                    b.Property<double>("SkillRating");
+                    b.Property<int>("SkillRating");
 
                     b.Property<int>("Team");
 
@@ -154,10 +143,6 @@ namespace LBPugs.Migrations
 
             modelBuilder.Entity("OWPugs.Models.Matches", b =>
                 {
-                    b.HasOne("OWPugs.Models.GameModes", "GameMode")
-                        .WithMany()
-                        .HasForeignKey("GameModeId");
-
                     b.HasOne("OWPugs.Models.Maps", "Map")
                         .WithMany()
                         .HasForeignKey("MapId");

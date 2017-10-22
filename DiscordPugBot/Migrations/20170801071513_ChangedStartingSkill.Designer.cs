@@ -5,39 +5,27 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using OWPugs.Models;
 
-namespace LBPugs.Migrations
+namespace DiscordPugBot.Migrations
 {
     [DbContext(typeof(MyDBContext))]
-    [Migration("20170806114115_GameModesAdded")]
-    partial class GameModesAdded
+    [Migration("20170801071513_ChangedStartingSkill")]
+    partial class ChangedStartingSkill
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.1.2");
 
-            modelBuilder.Entity("OWPugs.Models.GameModes", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int(11)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("varchar(255)")
-                        .HasDefaultValueSql("0");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GameModes");
-                });
-
             modelBuilder.Entity("OWPugs.Models.Maps", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int(11)");
+
+                    b.Property<int>("MapType")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int(11)")
+                        .HasDefaultValueSql("0");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -76,6 +64,8 @@ namespace LBPugs.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int(11)");
 
+                    b.Property<string>("BattleTag");
+
                     b.Property<long?>("DiscordId")
                         .HasColumnType("bigint(20)");
 
@@ -102,8 +92,6 @@ namespace LBPugs.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int(11)")
                         .HasDefaultValueSql("2000");
-
-                    b.Property<string>("SteamId");
 
                     b.Property<string>("UserName")
                         .HasColumnType("varchar(128)");

@@ -14,7 +14,7 @@ using System.IO;
 using System.Diagnostics;
 using Glicko2;
 using Microsoft.Extensions.Configuration;
-using LBPugs.Properties;
+using DiscordPugBot.Properties;
 using Microsoft.Extensions.Options;
 
 public class PugModule : ModuleBase<SocketCommandContext>

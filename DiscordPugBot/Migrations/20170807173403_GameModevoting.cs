@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace LBPugs.Migrations
+namespace DiscordPugBot.Migrations
 {
     public partial class GameModevoting : Migration
     {

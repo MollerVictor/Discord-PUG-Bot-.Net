@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace LBPugs.Properties {
+namespace DiscordPugBot.Properties {
     using System;
     using System.Reflection;
     
@@ -40,7 +40,7 @@ namespace LBPugs.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("LBPugs.Properties.Resources", typeof(Resources).GetTypeInfo().Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("DiscordPugBot.Properties.Resources", typeof(Resources).GetTypeInfo().Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -248,7 +248,6 @@ namespace LBPugs.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to **Dices Pug Bot
-        ///Stats Website:** http://dpl.victormoller.com/ 
         ///**To sign up for a pug write .add
         ///Commands:** 
         ///.help

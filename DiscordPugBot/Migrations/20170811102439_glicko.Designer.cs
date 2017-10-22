@@ -5,27 +5,39 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using OWPugs.Models;
 
-namespace LBPugs.Migrations
+namespace DiscordPugBot.Migrations
 {
     [DbContext(typeof(MyDBContext))]
-    [Migration("20170731204423_Initial")]
-    partial class Initial
+    [Migration("20170811102439_glicko")]
+    partial class glicko
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.1.2");
 
-            modelBuilder.Entity("OWPugs.Models.Maps", b =>
+            modelBuilder.Entity("OWPugs.Models.GameModes", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int(11)");
 
-                    b.Property<int>("MapType")
+                    b.Property<string>("Name")
+                        .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int(11)")
+                        .HasColumnType("varchar(255)")
                         .HasDefaultValueSql("0");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GameModes");
+                });
+
+            modelBuilder.Entity("OWPugs.Models.Maps", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int(11)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -43,6 +55,8 @@ namespace LBPugs.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
 
+                    b.Property<int?>("GameModeId");
+
                     b.Property<int?>("MapId");
 
                     b.Property<int>("MatchState");
@@ -52,6 +66,8 @@ namespace LBPugs.Migrations
                     b.Property<int>("TeamWinner");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GameModeId");
 
                     b.HasIndex("MapId");
 
@@ -63,8 +79,6 @@ namespace LBPugs.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int(11)");
-
-                    b.Property<string>("BattleTag");
 
                     b.Property<long?>("DiscordId")
                         .HasColumnType("bigint(20)");
@@ -88,13 +102,22 @@ namespace LBPugs.Migrations
                         .HasColumnType("int(11)")
                         .HasDefaultValueSql("0");
 
-                    b.Property<int>("SkillRating")
+                    b.Property<double>("RatingsDeviation")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int(11)")
-                        .HasDefaultValueSql("5000");
+                        .HasDefaultValueSql("350");
+
+                    b.Property<double>("SkillRating")
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValueSql("1500");
+
+                    b.Property<string>("SteamId");
 
                     b.Property<string>("UserName")
                         .HasColumnType("varchar(128)");
+
+                    b.Property<double>("Volatility")
+                        .ValueGeneratedOnAdd()
+                        .HasDefaultValueSql("0.06");
 
                     b.Property<int>("Wins")
                         .ValueGeneratedOnAdd()
@@ -118,7 +141,7 @@ namespace LBPugs.Migrations
 
                     b.Property<bool>("IsCaptain");
 
-                    b.Property<int>("SkillRating");
+                    b.Property<double>("SkillRating");
 
                     b.Property<int>("Team");
 
@@ -131,6 +154,10 @@ namespace LBPugs.Migrations
 
             modelBuilder.Entity("OWPugs.Models.Matches", b =>
                 {
+                    b.HasOne("OWPugs.Models.GameModes", "GameMode")
+                        .WithMany()
+                        .HasForeignKey("GameModeId");
+
                     b.HasOne("OWPugs.Models.Maps", "Map")
                         .WithMany()
                         .HasForeignKey("MapId");

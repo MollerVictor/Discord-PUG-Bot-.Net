@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using LBPugs.Properties;
+using DiscordPugBot.Properties;
 
 public class InfoModule : ModuleBase<SocketCommandContext>
 {

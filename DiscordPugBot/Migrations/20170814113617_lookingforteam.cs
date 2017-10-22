@@ -2,24 +2,24 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace LBPugs.Migrations
+namespace DiscordPugBot.Migrations
 {
-    public partial class Region : Migration
+    public partial class lookingforteam : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "Region",
-                table: "Matches",
+            migrationBuilder.AddColumn<bool>(
+                name: "LookingForTeam",
+                table: "Users",
                 nullable: false,
-                defaultValue: 0);
+                defaultValue: false);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Region",
-                table: "Matches");
+                name: "LookingForTeam",
+                table: "Users");
         }
     }
 }

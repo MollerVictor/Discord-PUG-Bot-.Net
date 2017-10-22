@@ -244,7 +244,6 @@ Captains don't forget to enter match results after the match. (.result &lt;win/l
   </data>
   <data name="HelpInfo" xml:space="preserve">
     <value>**Dices Pug Bot
-Stats Website:** http://dpl.victormoller.com/ 
 **To sign up for a pug write .add
 Commands:** 
 .help

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using OWPugs.Models;
 
-namespace LBPugs.Migrations
+namespace DiscordPugBot.Migrations
 {
     [DbContext(typeof(MyDBContext))]
     [Migration("20170807173403_GameModevoting")]

@@ -5,12 +5,13 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using OWPugs.Models;
 
-namespace LBPugs.Migrations
+namespace DiscordPugBot.Migrations
 {
     [DbContext(typeof(MyDBContext))]
-    partial class DBContextModelSnapshot : ModelSnapshot
+    [Migration("20170811225038_TimesLeftAPug")]
+    partial class TimesLeftAPug
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "1.1.2");
@@ -62,8 +63,6 @@ namespace LBPugs.Migrations
 
                     b.Property<DateTime>("PlayedDate");
 
-                    b.Property<int>("Region");
-
                     b.Property<int>("TeamWinner");
 
                     b.HasKey("Id");
@@ -88,8 +87,6 @@ namespace LBPugs.Migrations
 
                     b.Property<string>("Info")
                         .HasColumnType("varchar(200)");
-
-                    b.Property<bool>("LookingForTeam");
 
                     b.Property<int>("Loses")
                         .ValueGeneratedOnAdd()
