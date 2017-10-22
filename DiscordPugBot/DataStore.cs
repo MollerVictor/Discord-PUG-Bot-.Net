@@ -56,6 +56,12 @@ public class DataStore
 	public DataStore(IOptions<AppConfig> appConfig)
 	{
 		db = new MyDBContext(appConfig);
+		bool createdNewDB = db.Database.EnsureCreated();
+		if (createdNewDB)
+		{
+			Console.WriteLine("Couln't find database");
+			Console.WriteLine("Creating new Database");
+		}
 		AllMaps = db.Maps.ToList();
 		AllGameModes = db.GameModes.ToList();
 	}
