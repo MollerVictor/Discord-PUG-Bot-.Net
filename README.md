@@ -1,5 +1,13 @@
 # Discord-PUG-Bot-.Net
 
+## How it works
+Each user write .add to add themself to the pug.  
+When the pug is full it chooses 2 captains, it chooses captains by checking the players skillrating and matches played.  
+Then they pick players they want for their team.  
+After picking you vote for which map you wanna play, and after that which gamemode to play.  
+Then you play the pug, then after the pug is done one of the two captains enter which team that won.  
+And then it gives skillrating and update the stats for everyone that was in the game.  
+
 ## Install
 Require MySQL &  [.NET Core 1.1 or newer](https://www.microsoft.com/net/download/core#/runtime)  
 1. Setup MySQL.
