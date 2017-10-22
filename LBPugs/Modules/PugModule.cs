@@ -26,7 +26,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 	private const int GAMEMODE_VOTE_TIME = 45;
 	private const int READY_UP_TIME = 75;
 	private const string CHANNEL_NAME = "pugs";
-
+	private readonly Color EMBED_MESSAGE_COLOR = new Color(120, 40, 40);
 
 	private  List<DataStore.Teams> PickOrder = new List<DataStore.Teams> {	DataStore.Teams.TeamOne,																			
 																			DataStore.Teams.TeamTwo,
@@ -56,7 +56,8 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		if (datastore.CurrentPugState != DataStore.PugState.WaitingForPlayer)
 		{
-			await ReplyAsync(string.Format(Resources.ErrorWaitUntilTheyFinishedPicking, Context.User.GetName()));
+			await SendEmbededMessageAsync(string.Format(Resources.ErrorWaitUntilTheyFinishedPicking, Context.User.GetName()));
+
 			return;
 		}
 
@@ -74,7 +75,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		if (datastore.CurrentPugState != DataStore.PugState.WaitingForPlayer)
 		{
-			await ReplyAsync(string.Format(Resources.ErrorWaitUntilTheyFinishedPicking, Context.User.GetName()));
+			await SendEmbededMessageAsync(string.Format(Resources.ErrorWaitUntilTheyFinishedPicking, Context.User.GetName()));
 			return;
 		}
 
@@ -94,7 +95,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 				break;
 			default:
 				string replayString = string.Format(Resources.ErrorWrongRegionAdd, Context.User.GetName());
-				await ReplyAsync(replayString);
+				await SendEmbededMessageAsync(replayString);
 
 				return;
 		}
@@ -109,14 +110,14 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		if (signupList.Count >= MAX_PLAYERS)
 		{
 			string replayString = string.Format(Resources.ErrorPugIsFull, Context.User.GetName());
-			await ReplyAsync(replayString);
+			await SendEmbededMessageAsync(replayString);
 		}
 		else
 		{
 			if (signupList.Select(x => x.IUser.Id).Contains(user.Id))
 			{
 				string replayString = string.Format(Resources.ErrorYouAreAlreadySignedUp, Context.User, regionText,signupList.Count,MAX_PLAYERS);
-				await ReplyAsync(replayString);
+				await SendEmbededMessageAsync(replayString);
 			}
 			else
 			{
@@ -126,7 +127,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 				string replayString = string.Format(Resources.PlayerJoinedTheQueue, regionText, signupList.Count, MAX_PLAYERS,Context.User.GetName()) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 
-				await ReplyAsync(replayString);
+				await SendEmbededMessageAsync(replayString);
 
 				if (signupList.Count >= MAX_PLAYERS)
 				{
@@ -143,7 +144,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 					var autoEvent = new AutoResetEvent(false);
 					datastore.ReadyUpTimer = new Timer(new TimerCallback(ReadyUpTimerProc), autoEvent, READY_UP_TIME * 1000, 0);
 
-					await ReplyAsync(replayString2);
+					await SendEmbededMessageAsync(replayString2);
 				}
 
 				
@@ -194,7 +195,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 				break;
 			default:
 				string replayString = string.Format(Resources.ErrorWrongRegionLeave, Context.User.GetName());
-				await ReplyAsync(replayString);
+				await SendEmbededMessageAsync(replayString);
 				
 				return;
 		}
@@ -211,14 +212,13 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		if (removed)
 		{
 			string replayString = string.Format(Resources.PlayerLeftTheQueue, Context.User.GetName(),regionText,signupList.Count,MAX_PLAYERS) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
-			await ReplyAsync(replayString);
+			await SendEmbededMessageAsync(replayString);
 		}
 		else
 		{
 			string replayString = string.Format(Resources.ErrorLeavePugYouareNotIn, Context.User.GetName(),regionText, signupList.Count, MAX_PLAYERS) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 
-			// ReplyAsync is a method on ModuleBase
-			await ReplyAsync(replayString);
+			await SendEmbededMessageAsync(replayString);
 		}
 	}
 
@@ -255,7 +255,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 			string replayString = string.Format(Resources.RemovingPlayerThatIsNotReady, datastore._signupUsers.Count, MAX_PLAYERS) + string.Join("\n", datastore._signupUsers.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 
-			ReplyAsync(replayString);
+			SendEmbededMessageAsync(replayString);
 
 			SetChannelNameToCurrentUsers();
 		}
@@ -269,7 +269,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		if (datastore.CurrentPugState != DataStore.PugState.Readyup)
 		{
-			await ReplyAsync(string.Format(Resources.ErrorCantReadyUpRightNow, Context.User.GetName()));
+			await SendEmbededMessageAsync(string.Format(Resources.ErrorCantReadyUpRightNow, Context.User.GetName()));
 			return;
 		}
 			
@@ -285,33 +285,47 @@ public class PugModule : ModuleBase<SocketCommandContext>
 			if(datastore._signupUsers.Count(x => x.IsReady) == MAX_PLAYERS)
 			{
 				datastore.CurrentPugState = DataStore.PugState.PickingPlayers;
-
-				//TODO This dosen't remove the players for some reason. This is fixed I think?
-				datastore._euSignupUsers = datastore._euSignupUsers.Where(x => !datastore._signupUsers.Select(y => y.DatabaseUser.Id).Contains(x.DatabaseUser.Id)).ToList(); // Except(x => x. datastore._signupUsers).ToList();
+				
+				datastore._euSignupUsers = datastore._euSignupUsers.Where(x => !datastore._signupUsers.Select(y => y.DatabaseUser.Id).Contains(x.DatabaseUser.Id)).ToList();
 				datastore._naSignupUsers = datastore._naSignupUsers.Where(x => !datastore._signupUsers.Select(y => y.DatabaseUser.Id).Contains(x.DatabaseUser.Id)).ToList();
 
-				await ReplyAsync(Resources.EveryoneReady);				
+				await SendEmbededMessageAsync(Resources.EveryoneReady);				
 
 				await ChooseCaptains();
 			}
 			else
 			{
 				string replayString = string.Format(Resources.PleaseReadyUp, datastore._signupUsers.Count(x => x.IsReady), MAX_PLAYERS) + string.Join("\n", datastore._signupUsers.Where(x => x.IsReady == false).Select(x => x.IUser.Mention));
-				
 
-				var readyMessage = await ReplyAsync(replayString);
+				await SendEmbededMessageAsync(replayString);
 
-				//Delete the last ready up messagee, to avoid cluttering the chat
-				if (datastore.LastReadyMessage.Any())
+				//Alternating between editing message and sending a new message, to send notice beeps but avoid beeing spam limited.
+				/*if (datastore._signupUsers.Count(x => x.IsReady) % 3 == 0)
 				{
-					await datastore.LastReadyMessage.Dequeue().DeleteAsync();
+					
+
+					//Delete the last ready up messagee, to avoid cluttering the chat
+					if (datastore.LastReadyMessage.Any())
+					{
+						//await datastore.LastReadyMessage.Dequeue().DeleteAsync();
+					}
+					datastore.LastReadyMessage.Enqueue(readyMessage);
 				}
-				datastore.LastReadyMessage.Enqueue(readyMessage);
+				else
+				{
+					if (datastore.LastReadyMessage.Any())
+					{
+						await datastore.LastReadyMessage.Peek().ModifyAsync(x =>
+						{
+							x.Content = replayString;
+						});
+					}		
+				}*/				
 			}
 		}
 		else
 		{
-			await ReplyAsync(Resources.ErrorYouAreNotInThePug);
+			await SendEmbededMessageAsync(Resources.ErrorYouAreNotInThePug);
 		}
 	}
 
@@ -393,9 +407,9 @@ public class PugModule : ModuleBase<SocketCommandContext>
 			curId++;
 		});
 
-		await ReplyAsync(string.Format(Resources.CaptainsWithSkill, capt1.IUser.Mention, capt1.GetDisplayRanking(), capt2.IUser.Mention, capt2.GetDisplayRanking()));
+		await SendEmbededMessageAsync(string.Format(Resources.CaptainsWithSkill, capt1.IUser.Mention, capt1.GetDisplayRanking(), capt2.IUser.Mention, capt2.GetDisplayRanking()));
 
-		await ReplyAsync(Resources.PickNumber +
+		await SendEmbededMessageAsync(Resources.PickNumber +
 			string.Join("\n", datastore._signupUsers.Where(x => x.IsPicked == false).Select(x => string.Format(Resources.UserPickingInfo, x.PickID, x.IUser.GetName(), x.GetDisplayRanking(), x.DatabaseUser.Info ?? ""))) +
 			"\n" + string.Format(Resources.PlayersTurnToPick, capt1.IUser.Mention));
 	}
@@ -441,25 +455,23 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 					var nextCaptainToPick = nextTeamsPick == DataStore.Teams.TeamOne ? datastore._captain1 : datastore._captain2;
 
-					await ReplyAsync(string.Format(Resources.PlayersTurnToPick, nextCaptainToPick.IUser.Mention) + "\n" + string.Join("\n", datastore._signupUsers.Where(x => x.IsPicked == false).Select(x => string.Format(Resources.UserPickingInfo, x.PickID, x.IUser.GetName(), x.GetDisplayRanking(), x.DatabaseUser.Info ?? ""))));
+					await SendEmbededMessageAsync(string.Format(Resources.PlayersTurnToPick, nextCaptainToPick.IUser.Mention) + "\n" + string.Join("\n", datastore._signupUsers.Where(x => x.IsPicked == false).Select(x => string.Format(Resources.UserPickingInfo, x.PickID, x.IUser.GetName(), x.GetDisplayRanking(), x.DatabaseUser.Info ?? ""))));
 				}
 			}
 			else
 			{
-				await ReplyAsync(Resources.ErrorCantPickThatPlayer);
+				await SendEmbededMessageAsync(Resources.ErrorCantPickThatPlayer);
 			}
 		}
 		else
 		{
-			await ReplyAsync(Resources.ErrorYouAreNotAllowedToPick);
+			await SendEmbededMessageAsync(Resources.ErrorYouAreNotAllowedToPick);
 		}
 	}
 
 	async Task StartPug()
 	{
 		datastore.CurrentPugState = DataStore.PugState.MapVoting;
-
-		
 
 		Random rnd = new Random();
 
@@ -473,7 +485,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		int i = 1;
 		replayString += string.Format(Resources.VoteMap, MAP_VOTE_TIME) + string.Join("\n", datastore.CurrentPug.VoteableMaps.Select(x =>  $"{i++}. {x.Name}"));
 
-		await ReplyAsync(replayString);
+		await SendEmbededMessageAsync(replayString);
 		
 		var autoEvent = new AutoResetEvent(false);
 
@@ -499,7 +511,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		datastore.CurrentPugState = DataStore.PugState.GameModeVoting;
 
-		await ReplyAsync(replayString);
+		await SendEmbededMessageAsync(replayString);
 	}
 
 
@@ -550,7 +562,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		string replayString = string.Format(Resources.TeamLineups, team1String, team2String);
 
-		await ReplyAsync(string.Format(Resources.GameModeVoteFinished, datastore.CurrentPug.Region.ToString(), datastore.CurrentPug.MapPicked.Name, mostVotedGameMode.Name, match.Id) + replayString);
+		await SendEmbededMessageAsync(string.Format(Resources.GameModeVoteFinished, datastore.CurrentPug.Region.ToString(), datastore.CurrentPug.MapPicked.Name, mostVotedGameMode.Name, match.Id) + replayString);
 
 		ResetPug();		
 	}
@@ -577,7 +589,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 					if(mapId <= 0 || mapId > datastore.CurrentPug.VoteableMaps.Count)
 					{
 				
-						await ReplyAsync(string.Format(Resources.ErrorInvaildMapNumber, user.GetName()));
+						await SendEmbededMessageAsync(string.Format(Resources.ErrorInvaildMapNumber, user.GetName()));
 						
 					}
 					else
@@ -589,17 +601,17 @@ public class PugModule : ModuleBase<SocketCommandContext>
 							map.Votes++;
 							pugUser.HaveVotedForMap = true;
 
-							await ReplyAsync(string.Format(Resources.PlayerVotedForMap, user.GetName(), map.Name));
+							await SendEmbededMessageAsync(string.Format(Resources.PlayerVotedForMap, user.GetName(), map.Name));
 						}
 						else
 						{
-							await ReplyAsync(string.Format(Resources.ErrorInvaildMapNumber, user.GetName()));
+							await SendEmbededMessageAsync(string.Format(Resources.ErrorInvaildMapNumber, user.GetName()));
 						}
 					}
 				}
 				else
 				{
-					await ReplyAsync(string.Format(Resources.ErrorAlreadyVotedForMap, user.GetName()));
+					await SendEmbededMessageAsync(string.Format(Resources.ErrorAlreadyVotedForMap, user.GetName()));
 				}
 			}
 			else if(datastore.CurrentPugState == DataStore.PugState.GameModeVoting)
@@ -614,23 +626,23 @@ public class PugModule : ModuleBase<SocketCommandContext>
 						gameMode.Votes++;
 						pugUser.HaveVotedForGameMode = true;
 
-						await ReplyAsync(string.Format(Resources.PlayerVotedForMap, user.GetName(), gameMode.Name));
+						await SendEmbededMessageAsync(string.Format(Resources.PlayerVotedForMap, user.GetName(), gameMode.Name));
 					}
 					else
 					{
-						await ReplyAsync(string.Format(Resources.ErrorInvaildMapNumber, user.GetName()));
+						await SendEmbededMessageAsync(string.Format(Resources.ErrorInvaildMapNumber, user.GetName()));
 					}
 				}
 				else
 				{
-					await ReplyAsync(string.Format(Resources.ErrorAlreadyVotedForMap, user.GetName()));
+					await SendEmbededMessageAsync(string.Format(Resources.ErrorAlreadyVotedForMap, user.GetName()));
 				}
 			}
 
 		}		
 		else
 		{
-			await ReplyAsync(string.Format(Resources.ErrorOnlyPeopleInThePugCanVote, user.GetName()));
+			await SendEmbededMessageAsync(string.Format(Resources.ErrorOnlyPeopleInThePugCanVote, user.GetName()));
 		}
 	}
 
@@ -731,16 +743,16 @@ public class PugModule : ModuleBase<SocketCommandContext>
 					$"Avg SR: {loosingTeamAvgSkillRating.ToString("F0")}\n" + 
 					string.Join("\n", usersLost.Select(x => $"{x.UserName} {x.SkillRating.ToString("F0")} ({(x.SkillRating - x.PreviousSkillRating).ToString("F0")})"));
 
-				await ReplyAsync(string.Format(Resources.MatchFinished, winTeam.ToString(),match.Id, match.Map.Name, match.GameMode.Name, match.Region.ToString(), userRatingsChange));
+				await SendEmbededMessageAsync(string.Format(Resources.MatchFinished, winTeam.ToString(),match.Id, match.Map.Name, match.GameMode.Name, match.Region.ToString(), userRatingsChange));
 			}			
 			else
 			{
-				await ReplyAsync(string.Format(Resources.ErrorOnlyCaptainsCanEnterResult,Context.User.GetName()));
+				await SendEmbededMessageAsync(string.Format(Resources.ErrorOnlyCaptainsCanEnterResult,Context.User.GetName()));
 			}
 		}
 		else
 		{
-			await ReplyAsync(Resources.ErrorResultWinnerWrong);
+			await SendEmbededMessageAsync(Resources.ErrorResultWinnerWrong);
 		}	
 	}
 
@@ -821,7 +833,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 	{
 		ResetPug();
 
-		await ReplyAsync(Resources.PugCanceled);
+		await SendEmbededMessageAsync(Resources.PugCanceled);
 	}
 
 	[Command("adminreportscore"), AllowedChannelsService]
@@ -830,13 +842,13 @@ public class PugModule : ModuleBase<SocketCommandContext>
 	{
 		if(!(teamWinner == 1 || teamWinner == 2))
 		{
-			await ReplyAsync("**Invalid teamWinner*");
+			await SendEmbededMessageAsync("**Invalid teamWinner*");
 			return;
 		}
 
 		var match = datastore.db.MatchesWithUsers().FirstOrDefault(x => x.Id == matchId);
 
-		await ReplyAsync(match.Id + " " + match.PlayedDate + string.Join("\n", match.GetAllUsers(datastore).Select(x => x.UserName)));
+		await SendEmbededMessageAsync(match.Id + " " + match.PlayedDate + string.Join("\n", match.GetAllUsers(datastore).Select(x => x.UserName)));
 
 		
 		if(match != null)
@@ -850,11 +862,11 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 			await datastore.db.SaveChangesAsync();
 
-			await ReplyAsync("**Pug Score fixed**");
+			await SendEmbededMessageAsync("**Pug Score fixed**");
 		}
 		else
 		{
-			await ReplyAsync("**Invaild mapid*");
+			await SendEmbededMessageAsync("**Invaild mapid*");
 		}
 	}
 
@@ -876,5 +888,22 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		datastore._currentTeamPickingIndex = 0;
 
 		SetChannelNameToCurrentUsers();
+	}
+
+
+	async Task<IUserMessage> SendEmbededMessageAsync(string message)
+	{
+		return await SendEmbededMessageAsync("Pug", message);
+	}
+
+	async Task<IUserMessage> SendEmbededMessageAsync(string title, string message)
+	{
+		var embed = new EmbedBuilder()
+			.WithColor(EMBED_MESSAGE_COLOR)
+			.WithTitle(title)
+			.WithDescription(message)
+			.Build();
+
+		return await ReplyAsync("", false, embed);
 	}
 }

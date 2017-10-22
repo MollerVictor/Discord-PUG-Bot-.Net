@@ -13,6 +13,8 @@ using LBPugs.Properties;
 
 public class InfoModule : ModuleBase<SocketCommandContext>
 {
+	private readonly Color EMBED_MESSAGE_COLOR = new Color(40, 40, 120);
+
 	public DataStore datastore;
 	public InfoModule(DataStore ds)
 	{
@@ -23,7 +25,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 	[Alias("command", "commands", "help")]
 	public async Task PugCommands()
 	{
-		await ReplyAsync(Resources.HelpInfo);
+		await SendEmbededMessageAsync("Commands", Resources.HelpInfo);
 	}
 	
 	[Command("status"), Summary("Get pug status."), AllowedChannelsService]
@@ -47,7 +49,9 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 			addString += string.Format(Resources.TeamLineups,team1String, team2String);
 		}
 
-		await ReplyAsync(datastore.CurrentPugState.ToString() + "\n" + addString);
+		string replayString = datastore.CurrentPugState.ToString() + "\n" + addString;
+
+		await SendEmbededMessageAsync("Status", replayString);
 	}
 
 
@@ -56,9 +60,91 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 	{
 		string replayString = "\n" + string.Join("\n", datastore.AllMaps.Select(x => $"{x.Id}. {x.Name}"));
 
-		await ReplyAsync(replayString);
+		await SendEmbededMessageAsync("Maps", replayString);
 	}
 
+	//Note this one is allowed in every channel.
+	[Command("top")]
+	[Alias("top10", "best")]
+	public async Task Top10()
+	{
+		Context.Message.DeleteAsync();
+
+		var topUsers = datastore.db.Users.OrderByDescending(x => x.SkillRating).Where(x => x.GamesPlayed() >= 10).Take(10);
+
+		string topPlayersInfo = string.Join("\n", topUsers.Select(x => string.Format(Resources.NameAndSkillAndDeviation, x.UserName, x.SkillRating.ToString("F0"), x.RatingsDeviation.ToString("F0"))));
+
+		string returnString = string.Format(Resources.InfoTopPlayers, topPlayersInfo);
+
+		await SendEmbededMessageAsync("Top players", returnString);
+	}
+
+	[Command("mostgamesplayed"), AllowedChannelsService]
+	[Alias("nolife", "nolifer", "nolifers")]
+	public async Task MostGamesPlayed()
+	{
+		Context.Message.DeleteAsync();
+
+		var topUsers = datastore.db.Users.OrderByDescending(x => (x.Wins + x.Loses)).Take(10);
+
+		string playersInfo = string.Join("\n", topUsers.Select(x => string.Format(Resources.NameAndGamesPlayed, x.UserName, x.GamesPlayed())));
+
+		string returnString = string.Format(Resources.InfoMostActivePlayers, playersInfo);
+
+		await SendEmbededMessageAsync("Most active puggers", returnString);
+	}
+
+	[Command("noteamsplayers"), AllowedChannelsService]
+	[Alias("l4t", "teamplayers", "findplayers", "findteammembers", "noteamplayers")]
+	public async Task PrintPlayersLookingForTeam()
+	{
+		Context.Message.DeleteAsync();
+
+		var topUsers = datastore.db.Users.OrderByDescending(x => x.SkillRating).Where(x => x.LookingForTeam && x.GamesPlayed() >= 5).Take(20);
+
+		string playersInfo = string.Join("\n", topUsers.Select(x => string.Format(Resources.PlayerLongInfo, x.UserName, x.SkillRating.ToString("F0"), x.RatingsDeviation.ToString("F0"), x.Info)));
+
+		string returnString = string.Format(Resources.InfoPlayersLookingForTeam, playersInfo);
+
+		await SendEmbededMessageAsync("Players that are looking for a team", returnString);
+	}
+
+	[Command("mapstats"), AllowedChannelsService]
+	public async Task PrintMapStats()
+	{
+		Context.Message.DeleteAsync();
+
+		var allMatches = datastore.db.Matches.GroupBy(x => x.Map).OrderByDescending(x => x.Count());
+
+		string mapsStats = "";
+		foreach (var map in allMatches)
+		{
+			mapsStats += $"**{map.Key.Name}:** {map.Count()}\n";
+		}
+
+		string returnString = string.Format(Resources.InfoMapStats, datastore.db.Matches.Count(), mapsStats);
+
+
+		await SendEmbededMessageAsync("Most played maps", returnString);
+	}
+
+	[Command("gamemodestats"), AllowedChannelsService]
+	public async Task PrintGameModeStats()
+	{
+		Context.Message.DeleteAsync();
+
+		var allMatches = datastore.db.Matches.GroupBy(x => x.GameMode).OrderByDescending(x => x.Count());
+	
+		string gameModeStats = "";
+		foreach (var gameMode in allMatches)
+		{
+			gameModeStats += $"**{gameMode.Key.Name}:** {gameMode.Count()}\n";
+		}
+
+		string returnString = string.Format(Resources.InfoMapStats, datastore.db.Matches.Count(), gameModeStats);
+
+		await SendEmbededMessageAsync("Most played gamemodes", returnString);
+	}
 
 	[Command("userinfo"), Summary("Returns info about the current user, or the user parameter, if one passed."), AllowedChannelsService]
 	[Alias("user", "whois")]
@@ -68,7 +154,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
 		var userInfo = user ?? Context.User;
 
-		var infoUser = datastore.GetOrCreateUser(userInfo);		
+		var infoUser = datastore.GetOrCreateUser(userInfo);
 
 		string userInfoText = string.IsNullOrWhiteSpace(infoUser.Info) ? "" : $"\n({infoUser.Info})";
 
@@ -77,7 +163,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 		Context.User.SendMessageAsync(replayString);
 	}
 
-	[Command("setinfo"), AllowedChannelsService]	
+	[Command("setinfo"), AllowedChannelsService]
 	public async Task SetUserInfo([RemainderAttribute]string infoText)
 	{
 		Context.Message.DeleteAsync();
@@ -123,7 +209,7 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
 			await datastore.db.SaveChangesAsync();
 
-			userInfo.SendMessageAsync(Resources.SteamIDUpdated);		
+			userInfo.SendMessageAsync(Resources.SteamIDUpdated);
 		}
 	}
 
@@ -147,66 +233,14 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 		userInfo.SendMessageAsync(string.Format(Resources.LookingForTeamUpdated, Context.User.GetName(), newStatus.ToString()));
 	}
 
-
-	//Note this one is allowed in every channel.
-	[Command("top")]
-	[Alias("top10", "best")]
-	public async Task Top10()
+	async Task SendEmbededMessageAsync(string title, string message)
 	{
-		var topUsers = datastore.db.Users.OrderByDescending(x => x.SkillRating).Where(x => x.GamesPlayed() >= 10).Take(10);
+		var embed = new EmbedBuilder()
+			.WithColor(EMBED_MESSAGE_COLOR)
+			.WithTitle(title)
+			.WithDescription(message)
+			.Build();
 
-		string topPlayersInfo = string.Join("\n", topUsers.Select(x => string.Format(Resources.NameAndSkillAndDeviation, x.UserName, x.SkillRating.ToString("F0"), x.RatingsDeviation.ToString("F0"))));
-
-		await ReplyAsync(string.Format(Resources.InfoTopPlayers, topPlayersInfo));
-	}
-
-	[Command("mostgamesplayed"), AllowedChannelsService]
-	[Alias("nolife", "nolifer", "nolifers")]
-	public async Task MostGamesPlayed()
-	{
-		var topUsers = datastore.db.Users.OrderByDescending(x => (x.Wins + x.Loses)).Take(10);
-
-		string playersInfo = string.Join("\n", topUsers.Select(x => string.Format(Resources.NameAndGamesPlayed, x.UserName, x.GamesPlayed())));
-
-		await ReplyAsync(string.Format(Resources.InfoMostActivePlayers, playersInfo));
-	}
-
-	[Command("noteamsplayers"), AllowedChannelsService]
-	[Alias("l4t", "teamplayers", "findplayers", "findteammembers", "noteamplayers")]
-	public async Task PrintPlayersLookingForTeam()
-	{
-		var topUsers = datastore.db.Users.OrderByDescending(x => x.SkillRating).Where(x => x.LookingForTeam && x.GamesPlayed() >= 5).Take(20);
-
-		string playersInfo = string.Join("\n", topUsers.Select(x => string.Format(Resources.PlayerLongInfo, x.UserName, x.SkillRating.ToString("F0"), x.RatingsDeviation.ToString("F0"), x.Info)));
-
-		await ReplyAsync(string.Format(Resources.InfoPlayersLookingForTeam, playersInfo)); 
-	}
-
-	[Command("mapstats"), AllowedChannelsService]
-	public async Task PrintMapStats()
-	{
-		var allMatches = datastore.db.Matches.GroupBy(x => x.Map).OrderByDescending(x => x.Count());
-
-		string mapsStats = "";
-		foreach (var map in allMatches)
-		{
-			mapsStats += $"**{map.Key.Name}:** {map.Count()}\n";
-		}
-
-		await ReplyAsync(string.Format(Resources.InfoMapStats, datastore.db.Matches.Count(), mapsStats));
-	}
-
-	[Command("gamemodestats"), AllowedChannelsService]
-	public async Task PrintGameModeStats()
-	{
-		var allMatches = datastore.db.Matches.GroupBy(x => x.GameMode).OrderByDescending(x => x.Count());
-	
-		string gameModeStats = "";
-		foreach (var gameMode in allMatches)
-		{
-			gameModeStats += $"**{gameMode.Key.Name}:** {gameMode.Count()}\n";
-		}
-
-		await ReplyAsync(string.Format(Resources.InfoMapStats, datastore.db.Matches.Count(), gameModeStats));
+		await ReplyAsync("", false, embed);
 	}
 }
