@@ -285,8 +285,7 @@ namespace LBPugs.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Most active players:
-        ///{0}.
+        ///   Looks up a localized string similar to {0}.
         /// </summary>
         internal static string InfoMostActivePlayers {
             get {
@@ -295,8 +294,7 @@ namespace LBPugs.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Players looking for team:
-        ///{0}.
+        ///   Looks up a localized string similar to {0}.
         /// </summary>
         internal static string InfoPlayersLookingForTeam {
             get {
@@ -305,8 +303,7 @@ namespace LBPugs.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Top players:
-        ///{0}.
+        ///   Looks up a localized string similar to {0}.
         /// </summary>
         internal static string InfoTopPlayers {
             get {

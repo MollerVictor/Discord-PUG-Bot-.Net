@@ -269,16 +269,13 @@ Commands:**
 {1}</value>
   </data>
   <data name="InfoMostActivePlayers" xml:space="preserve">
-    <value>Most active players:
-{0}</value>
+    <value>{0}</value>
   </data>
   <data name="InfoPlayersLookingForTeam" xml:space="preserve">
-    <value>Players looking for team:
-{0}</value>
+    <value>{0}</value>
   </data>
   <data name="InfoTopPlayers" xml:space="preserve">
-    <value>Top players:
-{0}</value>
+    <value>{0}</value>
   </data>
   <data name="LookingForTeamUpdated" xml:space="preserve">
     <value>{0}, Looking for team: {1}</value>
