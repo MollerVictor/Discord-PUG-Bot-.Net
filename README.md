@@ -14,6 +14,7 @@ Exemple: https://discordapp.com/channels/298267127004004353/312576903653490690
 Here you should copy 312576903653490690
 9. Now open cmd in the current folder, and run "dotnet DiscordPugBot.dll"
 10. Done! You can now test the bot by writing ".add"
+11. Connect to the MySQL Server with a client, and add maps and gamesmodes rows for the game you are using it for.
 
 
 [Discord.Net Repo](https://github.com/RogueException/Discord.Net)  
