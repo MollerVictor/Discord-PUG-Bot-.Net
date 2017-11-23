@@ -1,11 +1,8 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.IO;
-using System.Diagnostics;
 
 namespace OWPugs.Models
 {

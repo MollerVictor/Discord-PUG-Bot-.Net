@@ -30,13 +30,13 @@ public class DataStore
 	public PugState CurrentPugState;
 
 	//TODO Move these to the Pug class
-	public PugUser _captain1;
-	public PugUser _captain2;
+	public PugUser Captain1;
+	public PugUser Captain2;
 
-	public int _currentTeamPickingIndex;
+	public int CurrentTeamPickingIndex;
 
 
-	public List<PugUser> _signupUsers = new List<PugUser>();
+	public List<PugUser> SignedUpUsers = new List<PugUser>();
 
 	public List<PugUser> _naSignupUsers = new List<PugUser>();
 	public List<PugUser> _euSignupUsers = new List<PugUser>();
@@ -82,7 +82,7 @@ public class DataStore
 
 	public PugUser GetUserInPugInNotStartedPug(IUser user)
 	{
-		return _signupUsers.FirstOrDefault(x => x.IUser.Id == user.Id);
+		return SignedUpUsers.FirstOrDefault(x => x.IUser.Id == user.Id);
 	}
 
 	public PugUser GetUserInPugInNotStartedPug(List<PugUser> list, IUser user)
@@ -92,7 +92,7 @@ public class DataStore
 
 	public bool IsCaptain(IUser user)
 	{
-		if (_captain1.IUser.Id == user.Id || _captain2.IUser.Id == user.Id) return true;
+		if (Captain1.IUser.Id == user.Id || Captain2.IUser.Id == user.Id) return true;
 
 		return false;
 	}

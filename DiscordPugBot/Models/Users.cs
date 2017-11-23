@@ -27,9 +27,6 @@ namespace OWPugs.Models
 		public int FatKided { get; set; }
 		public int TimesLeftAPug { get; set; }
 
-		
-		
-
 
 		public List<UsersMatchesRelation> UserMatches { get; set; }
 
