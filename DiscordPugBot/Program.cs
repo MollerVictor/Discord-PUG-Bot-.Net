@@ -36,6 +36,7 @@ public class Program
 
 		var appConfig = services.GetService<IOptions<AppConfig>>().Value;
 
+		Console.WriteLine("Starting Discord Client");
 		await _client.LoginAsync(TokenType.Bot, appConfig.DiscordBotToken);
 		await _client.StartAsync();
 
@@ -62,8 +63,16 @@ public class Program
 
 	private IConfigurationRoot BuildConfig()
 	{
+		string folder = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+		Console.WriteLine($"Loading config.json from: {folder}");
+		string path = Path.Combine(folder, "config.json");
+		if(!File.Exists(path))
+		{
+			Console.WriteLine("Can't find config.json at path.");
+		}
+
 		return new ConfigurationBuilder()
-			.SetBasePath(Directory.GetCurrentDirectory())
+			.SetBasePath(folder)
 			.AddJsonFile("config.json")
 			.Build();
 	}
