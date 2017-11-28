@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using OWPugs.Models;
+using DiscordPugBot.Models;
 using System.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -62,6 +62,7 @@ public class DataStore
 			Console.WriteLine("Couln't find database");
 			Console.WriteLine("Creating new Database");
 		}
+		
 		AllMaps = db.Maps.ToList();
 		AllGameModes = db.GameModes.ToList();
 	}

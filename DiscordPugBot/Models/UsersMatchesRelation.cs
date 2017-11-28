@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace OWPugs.Models
+namespace DiscordPugBot.Models
 {
     public class UsersMatchesRelation
     {

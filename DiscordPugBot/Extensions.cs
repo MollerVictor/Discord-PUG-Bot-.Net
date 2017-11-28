@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
-using OWPugs.Models;
+using DiscordPugBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

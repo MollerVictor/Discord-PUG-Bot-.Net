@@ -3,7 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using OWPugs.Models;
+using DiscordPugBot.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -160,7 +160,9 @@ public class InfoModule : ModuleBase<SocketCommandContext>
 
 		string replayString = string.Format(Resources.PlayerFullInfo, userInfo.Username, infoUser.SkillRating.ToString("F0"), infoUser.RatingsDeviation.ToString("F0"), infoUser.Wins, infoUser.Loses, infoUser.WinsAsCaptain, infoUser.LosesAsCaptain, userInfoText, infoUser.LookingForTeam.ToString());
 
-		Context.User.SendMessageAsync(replayString);
+		//Context.User.SendMessageAsync(replayString);
+
+		await SendEmbededMessageAsync("Userinfo", replayString);
 	}
 
 	[Command("setinfo"), AllowedChannelsService]

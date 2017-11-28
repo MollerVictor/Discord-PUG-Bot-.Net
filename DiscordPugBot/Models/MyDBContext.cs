@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using System.IO;
 
-namespace OWPugs.Models
+namespace DiscordPugBot.Models
 {
     public class MyDBContext : DbContext 
 	{

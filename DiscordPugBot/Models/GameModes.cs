@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace OWPugs.Models
+namespace DiscordPugBot.Models
 {
 	public partial class GameModes
 	{
