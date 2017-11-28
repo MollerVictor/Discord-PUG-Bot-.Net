@@ -13,6 +13,7 @@ namespace DiscordPugBot.Models
 		public virtual DbSet<Users> Users { get; set; }
 		public virtual DbSet<Matches> Matches { get; set; }
 		public virtual DbSet<UsersMatchesRelation> UsersMatchesRelation { get; set; }
+		public virtual DbSet<Achievements> Achievements { get; set; }
 
 		private AppConfig _appConfig;
 
@@ -59,6 +60,23 @@ namespace DiscordPugBot.Models
 				.HasOne(pt => pt.User)
 				.WithMany(t => t.UserMatches)
 				.HasForeignKey(pt => pt.UserId);
+
+
+
+			modelBuilder.Entity<UsersAchievements>()
+				.HasKey(t => new { t.AchievementId, t.UserId });
+
+			modelBuilder.Entity<UsersAchievements>()
+				.HasOne(pt => pt.Achievement)
+				.WithMany(p => p.UsersAchievements)
+				.HasForeignKey(pt => pt.AchievementId);
+
+			modelBuilder.Entity<UsersAchievements>()
+				.HasOne(pt => pt.User)
+				.WithMany(t => t.UsersAchievements)
+				.HasForeignKey(pt => pt.UserId);
+
+
 
 			modelBuilder.Entity<Maps>(entity =>
             {
@@ -116,8 +134,8 @@ namespace DiscordPugBot.Models
 					.HasDefaultValueSql("0");
 
 				entity.Property(e => e.LosesAsCaptain)
-					.HasDefaultValueSql("0");
-			});
-        }
+					.HasDefaultValueSql("0");					
+			});		
+		}
 	}
 }

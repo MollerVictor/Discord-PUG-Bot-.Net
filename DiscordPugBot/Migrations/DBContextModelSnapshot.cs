@@ -15,10 +15,26 @@ namespace DiscordPugBot.Migrations
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
+#pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "1.1.2");
+                .HasAnnotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn)
+                .HasAnnotation("ProductVersion", "2.0.1-rtm-125");
 
-            modelBuilder.Entity("OWPugs.Models.GameModes", b =>
+            modelBuilder.Entity("DiscordPugBot.Models.Achievements", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<string>("Description");
+
+                    b.Property<string>("Name");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Achievements");
+                });
+
+            modelBuilder.Entity("DiscordPugBot.Models.GameModes", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -35,7 +51,7 @@ namespace DiscordPugBot.Migrations
                     b.ToTable("GameModes");
                 });
 
-            modelBuilder.Entity("OWPugs.Models.Maps", b =>
+            modelBuilder.Entity("DiscordPugBot.Models.Maps", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -52,7 +68,7 @@ namespace DiscordPugBot.Migrations
                     b.ToTable("Maps");
                 });
 
-            modelBuilder.Entity("OWPugs.Models.Matches", b =>
+            modelBuilder.Entity("DiscordPugBot.Models.Matches", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd();
@@ -78,7 +94,7 @@ namespace DiscordPugBot.Migrations
                     b.ToTable("Matches");
                 });
 
-            modelBuilder.Entity("OWPugs.Models.Users", b =>
+            modelBuilder.Entity("DiscordPugBot.Models.Users", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -141,7 +157,20 @@ namespace DiscordPugBot.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("OWPugs.Models.UsersMatchesRelation", b =>
+            modelBuilder.Entity("DiscordPugBot.Models.UsersAchievements", b =>
+                {
+                    b.Property<int>("AchievementId");
+
+                    b.Property<int>("UserId");
+
+                    b.HasKey("AchievementId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UsersAchievements");
+                });
+
+            modelBuilder.Entity("DiscordPugBot.Models.UsersMatchesRelation", b =>
                 {
                     b.Property<int>("MatchId");
 
@@ -160,29 +189,43 @@ namespace DiscordPugBot.Migrations
                     b.ToTable("UsersMatchesRelation");
                 });
 
-            modelBuilder.Entity("OWPugs.Models.Matches", b =>
+            modelBuilder.Entity("DiscordPugBot.Models.Matches", b =>
                 {
-                    b.HasOne("OWPugs.Models.GameModes", "GameMode")
+                    b.HasOne("DiscordPugBot.Models.GameModes", "GameMode")
                         .WithMany()
                         .HasForeignKey("GameModeId");
 
-                    b.HasOne("OWPugs.Models.Maps", "Map")
+                    b.HasOne("DiscordPugBot.Models.Maps", "Map")
                         .WithMany()
                         .HasForeignKey("MapId");
                 });
 
-            modelBuilder.Entity("OWPugs.Models.UsersMatchesRelation", b =>
+            modelBuilder.Entity("DiscordPugBot.Models.UsersAchievements", b =>
                 {
-                    b.HasOne("OWPugs.Models.Matches", "Match")
+                    b.HasOne("DiscordPugBot.Models.Achievements", "Achievement")
+                        .WithMany("UsersAchievements")
+                        .HasForeignKey("AchievementId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("DiscordPugBot.Models.Users", "User")
+                        .WithMany("UsersAchievements")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("DiscordPugBot.Models.UsersMatchesRelation", b =>
+                {
+                    b.HasOne("DiscordPugBot.Models.Matches", "Match")
                         .WithMany("UserMatches")
                         .HasForeignKey("MatchId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("OWPugs.Models.Users", "User")
+                    b.HasOne("DiscordPugBot.Models.Users", "User")
                         .WithMany("UserMatches")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
+#pragma warning restore 612, 618
         }
     }
 }

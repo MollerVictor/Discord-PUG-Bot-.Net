@@ -27,8 +27,9 @@ namespace DiscordPugBot.Models
 		public int FatKided { get; set; }
 		public int TimesLeftAPug { get; set; }
 
-
 		public List<UsersMatchesRelation> UserMatches { get; set; }
+
+		public virtual ICollection<UsersAchievements> UsersAchievements { get; set; }
 
 		public List<Matches> GetAllMatches(DataStore datastore)
 		{
