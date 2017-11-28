@@ -9,4 +9,7 @@
 	public string ChannelDisplayName { get; set; }
 
 	public int PlayersPerTeam { get; set; }
+
+	public bool UseRegionEU { get; set; }
+	public bool UseRegionNA { get; set; }
 }

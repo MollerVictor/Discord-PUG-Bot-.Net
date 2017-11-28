@@ -22,14 +22,10 @@ public class PugModule : ModuleBase<SocketCommandContext>
 {
 	//TODO Move these to the config file
 	
-	//private const int PLAYERS_PER_TEAM = 6;
 	private const int MAP_VOTE_TIME = 60;
 	private const int GAMEMODE_VOTE_TIME = 45;
 	private const int READY_UP_TIME = 75;
 	private readonly Color EMBED_MESSAGE_COLOR = new Color(120, 40, 40);
-
-	private const bool USE_EU_REGION = true;
-	private const bool USE_NA_REGION = false;
 
 	private const bool CHANGE_DISCORD_LOGO = false;
 
@@ -82,12 +78,12 @@ public class PugModule : ModuleBase<SocketCommandContext>
 			return;
 		}
 
-		if (USE_EU_REGION)
+		if (_appConfig.UseRegionEU)
 		{
 			await AddToQueueList(datastore._euSignupUsers, "EU");
 		}
 
-		if(USE_NA_REGION)
+		if(_appConfig.UseRegionNA)
 		{
 			await AddToQueueList(datastore._naSignupUsers, "NA");
 		}
@@ -192,12 +188,12 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		if (datastore.CurrentPugState != DataStore.PugState.WaitingForPlayer)
 			return;
 
-		if (USE_EU_REGION)
+		if (_appConfig.UseRegionEU)
 		{
 			await RemoveFromQueueList(datastore._euSignupUsers, "EU");
 		}
 
-		if(USE_NA_REGION)
+		if(_appConfig.UseRegionNA)
 		{
 			await RemoveFromQueueList(datastore._naSignupUsers, "NA");
 		}
@@ -274,9 +270,15 @@ public class PugModule : ModuleBase<SocketCommandContext>
 					});
 				}
 
+				string baseString = $"{_appConfig.ChannelDisplayName}";
+				string euRegion = _appConfig.UseRegionEU ? $"_eu{ datastore._euSignupUsers.Count()}" : "";
+				string naRegion = _appConfig.UseRegionNA ? $"_na{ datastore._naSignupUsers.Count()}" : "";
+
+				string channelName = baseString + euRegion + naRegion;
+
 				await channel.ModifyAsync(x =>
 				{
-					x.Name = $"{_appConfig.ChannelDisplayName}_eu{datastore._euSignupUsers.Count()}_na{datastore._naSignupUsers.Count()}";
+					x.Name = channelName;
 				});
 			}
 			else
