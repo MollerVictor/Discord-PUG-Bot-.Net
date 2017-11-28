@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Pomelo.EntityFrameworkCore.MySql;
-using Pomelo.EntityFrameworkCore.Extensions;
+using Pomelo.EntityFrameworkCore;
 using System.IO;
 using System.Diagnostics;
 using Glicko2;
@@ -21,21 +21,19 @@ using Microsoft.Extensions.Options;
 public class PugModule : ModuleBase<SocketCommandContext>
 {
 	//TODO Move these to the config file
-	public const int MAX_PLAYERS = PLAYERS_PER_TEAM * 2;
-	private const int PLAYERS_PER_TEAM = 6;
+	
+	//private const int PLAYERS_PER_TEAM = 6;
 	private const int MAP_VOTE_TIME = 60;
 	private const int GAMEMODE_VOTE_TIME = 45;
 	private const int READY_UP_TIME = 75;
-	private const string CHANNEL_NAME = "propugs";
 	private readonly Color EMBED_MESSAGE_COLOR = new Color(120, 40, 40);
 
 	private const bool USE_EU_REGION = true;
 	private const bool USE_NA_REGION = false;
 
+	private const bool CHANGE_DISCORD_LOGO = false;
 
 	private List<DataStore.Teams> PickOrder = new List<DataStore.Teams> {  DataStore.Teams.TeamOne,
-																			DataStore.Teams.TeamTwo,
-																			DataStore.Teams.TeamOne,
 																			DataStore.Teams.TeamTwo,
 																			DataStore.Teams.TeamOne,
 																			DataStore.Teams.TeamTwo,
@@ -44,8 +42,10 @@ public class PugModule : ModuleBase<SocketCommandContext>
 																			DataStore.Teams.TeamTwo,
 																			DataStore.Teams.TeamOne,};
 
+	int _maxPlayers;
+
 	public DataStore datastore;
-	private AppConfig _appConfig;
+	AppConfig _appConfig;
 
 	bool _useGameModes = false;
 
@@ -56,13 +56,16 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		datastore = ds;
 		_appConfig = appConfig.Value;
 
-		_logoImages = new Image[13];
-		for (int i = 0;i <= 12; i++)
-		{
-			_logoImages[i] = new Image($@"C:\test\logo{i}.png");
-		}
+		_maxPlayers = _appConfig.PlayersPerTeam * 2;
 
-		
+		if (CHANGE_DISCORD_LOGO)
+		{
+			_logoImages = new Image[13];
+			for (int i = 0; i <= 12; i++)
+			{
+				_logoImages[i] = new Image($@"C:\test\logo{i}.png");
+			}
+		}
 	}
 
 
@@ -133,7 +136,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 	{
 		var user = Context.User;
 
-		if (signupList.Count >= MAX_PLAYERS)
+		if (signupList.Count >= _maxPlayers)
 		{
 			string replayString = string.Format(Resources.ErrorPugIsFull, Context.User.GetName());
 			await SendEmbededMessageAsync(replayString);
@@ -142,7 +145,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		{
 			if (signupList.Select(x => x.IUser.Id).Contains(user.Id))
 			{
-				string replayString = string.Format(Resources.ErrorYouAreAlreadySignedUp, Context.User, regionText,signupList.Count,MAX_PLAYERS);
+				string replayString = string.Format(Resources.ErrorYouAreAlreadySignedUp, Context.User, regionText,signupList.Count,_maxPlayers);
 				await SendEmbededMessageAsync(replayString);
 			}
 			else
@@ -151,11 +154,11 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 				signupList.Add(pugUser);
 
-				string replayString = string.Format(Resources.PlayerJoinedTheQueue, regionText, signupList.Count, MAX_PLAYERS,Context.User.GetName()) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
+				string replayString = string.Format(Resources.PlayerJoinedTheQueue, regionText, signupList.Count, _maxPlayers,Context.User.GetName()) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 
 				await SendEmbededMessageAsync(replayString);
 
-				if (signupList.Count >= MAX_PLAYERS)
+				if (signupList.Count >= _maxPlayers)
 				{
 					datastore.SignedUpUsers = signupList;
 
@@ -245,12 +248,12 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		if (removed)
 		{
-			string replayString = string.Format(Resources.PlayerLeftTheQueue, Context.User.GetName(),regionText,signupList.Count,MAX_PLAYERS) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
+			string replayString = string.Format(Resources.PlayerLeftTheQueue, Context.User.GetName(),regionText,signupList.Count,_maxPlayers) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 			await SendEmbededMessageAsync(replayString);
 		}
 		else
 		{
-			string replayString = string.Format(Resources.ErrorLeavePugYouareNotIn, Context.User.GetName(),regionText, signupList.Count, MAX_PLAYERS) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
+			string replayString = string.Format(Resources.ErrorLeavePugYouareNotIn, Context.User.GetName(),regionText, signupList.Count, _maxPlayers) + string.Join("\n", signupList.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 
 			await SendEmbededMessageAsync(replayString);
 		}
@@ -263,26 +266,33 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		{
 			if (datastore._euSignupUsers.Any() || datastore._naSignupUsers.Any())
 			{
-				await Context.Guild.ModifyAsync(x =>
+				if (CHANGE_DISCORD_LOGO)
 				{
-					x.Icon = _logoImages[datastore._euSignupUsers.Count];
-				});
+					await Context.Guild.ModifyAsync(x =>
+					{
+						x.Icon = _logoImages[datastore._euSignupUsers.Count];
+					});
+				}
 
 				await channel.ModifyAsync(x =>
 				{
-					x.Name = $"{CHANNEL_NAME}_eu{datastore._euSignupUsers.Count()}_na{datastore._naSignupUsers.Count()}";
+					x.Name = $"{_appConfig.ChannelDisplayName}_eu{datastore._euSignupUsers.Count()}_na{datastore._naSignupUsers.Count()}";
 				});
 			}
 			else
 			{
-				await Context.Guild.ModifyAsync(x =>
+				if(CHANGE_DISCORD_LOGO)
 				{
-					x.Icon = _logoImages[0];
-				});
+					await Context.Guild.ModifyAsync(x =>
+					{
+						x.Icon = _logoImages[0];
+					});
+				}
+
 
 				await channel.ModifyAsync(x =>
 				{
-					x.Name = CHANNEL_NAME;
+					x.Name = _appConfig.ChannelDisplayName;
 				});
 			}
 		}
@@ -297,7 +307,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 			datastore.SignedUpUsers.RemoveAll(x => !x.IsReady);
 			datastore.SignedUpUsers.ForEach(x => x.IsReady = false);
 
-			string replayString = string.Format(Resources.RemovingPlayerThatIsNotReady, datastore.SignedUpUsers.Count, MAX_PLAYERS) + string.Join("\n", datastore.SignedUpUsers.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
+			string replayString = string.Format(Resources.RemovingPlayerThatIsNotReady, datastore.SignedUpUsers.Count, _maxPlayers) + string.Join("\n", datastore.SignedUpUsers.Select(x => string.Format(Resources.NameAndRating, x.IUser.GetName(), x.GetDisplayRanking())));
 
 			SendEmbededMessageAsync(replayString);
 
@@ -326,7 +336,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		{
 			pugUser.IsReady = true;
 
-			if(datastore.SignedUpUsers.Count(x => x.IsReady) == MAX_PLAYERS)
+			if(datastore.SignedUpUsers.Count(x => x.IsReady) == _maxPlayers)
 			{
 				datastore.CurrentPugState = DataStore.PugState.PickingPlayers;
 				
@@ -339,7 +349,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 			}
 			else
 			{
-				string replayString = string.Format(Resources.PleaseReadyUp, datastore.SignedUpUsers.Count(x => x.IsReady), MAX_PLAYERS) + string.Join("\n", datastore.SignedUpUsers.Where(x => x.IsReady == false).Select(x => x.IUser.Mention));
+				string replayString = string.Format(Resources.PleaseReadyUp, datastore.SignedUpUsers.Count(x => x.IsReady), _maxPlayers) + string.Join("\n", datastore.SignedUpUsers.Where(x => x.IsReady == false).Select(x => x.IUser.Mention));
 
 				await SendEmbededMessageAsync(replayString);
 
@@ -840,7 +850,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 					$"Avg SR: {loosingTeamAvgSkillRating.ToString("F0")}\n" + 
 					string.Join("\n", usersLost.Select(x => $"{x.UserName} {x.SkillRating.ToString("F0")} ({(x.SkillRating - x.PreviousSkillRating).ToString("F0")})"));
 
-				await SendEmbededMessageAsync(string.Format(Resources.MatchFinished, winTeam.ToString(),match.Id, match.Map.Name, match.GameMode.Name, match.Region.ToString(), userRatingsChange));
+				await SendEmbededMessageAsync(string.Format(Resources.MatchFinished, winTeam.ToString(),match.Id, match.Map.Name, match.GameMode?.Name, match.Region.ToString(), userRatingsChange));
 			}			
 			else
 			{

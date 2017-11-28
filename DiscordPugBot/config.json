@@ -1,7 +1,9 @@
-﻿﻿{
+﻿{
   "AppConfig": {
     "discordBotToken": "<Discord bot token>",
     "connectionString": "Server=127.0.0.1;Database=<DatabaseName>;User ID=<user id>;Password=<password>",
-    "allowedChannel": "<ChannelId> Exemple: 313092404611645443"
+    "allowedChannel": "<ChannelId> Exemple: 313092404611645443",
+    "playersPerTeam": "5",
+    "channelDisplayName":  "pugs"
   }
 }
