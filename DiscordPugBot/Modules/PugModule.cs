@@ -43,8 +43,6 @@ public class PugModule : ModuleBase<SocketCommandContext>
 	public DataStore datastore;
 	AppConfig _appConfig;
 
-	bool _useGameModes = false;
-
 	Image[] _logoImages;
 
 	public PugModule(DataStore ds, IOptions<AppConfig> appConfig)
@@ -563,7 +561,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 
 		var autoEvent = new AutoResetEvent(false);
 
-		if(_useGameModes)
+		if(_appConfig.UseGameModes)
 		{
 			datastore.GameModeVoteTimer = new Timer(new TimerCallback(GameModeVoteTimerProcAsync), autoEvent, GAMEMODE_VOTE_TIME * 1000, 0);
 
@@ -590,46 +588,7 @@ public class PugModule : ModuleBase<SocketCommandContext>
 		var mostVotedGameMode = allGamemodesWithSameAmountVotes.ElementAt(random.Next(0, allGamemodesWithSameAmountVotes.Count()));
 
 
-		var allUsers = datastore.SignedUpUsers.ToList();
-
-		Matches match = new Matches()
-		{
-			PlayedDate = DateTime.UtcNow,
-			GameMode = mostVotedGameMode,
-			Map = datastore.CurrentPug.MapPicked,
-		};
-
-		match.UserMatches = new List<UsersMatchesRelation>();
-		foreach (var user in allUsers)
-		{
-			var rel = new UsersMatchesRelation()
-			{
-				Match = match,
-				User = user.DatabaseUser,
-				Team = (int)user.Team,
-				SkillRating = user.DatabaseUser.SkillRating
-			};
-			if (datastore.Captain1.DatabaseUser.Id == user.DatabaseUser.Id || datastore.Captain2.DatabaseUser.Id == user.DatabaseUser.Id)
-			{
-				rel.IsCaptain = true;
-			}
-
-			match.UserMatches.Add(rel);
-		}
-		match.Region = datastore.CurrentPug.Region;
-		
-		datastore.db.Matches.Add(match);
-
-		await datastore.db.SaveChangesAsync();
-
-		string team1String = string.Join("\n", datastore.SignedUpUsers.Where(x => x.Team == DataStore.Teams.TeamOne).Select(x => x.IUser.GetName() + " " + x.GetDisplayRanking()));
-		string team2String = string.Join("\n", datastore.SignedUpUsers.Where(x => x.Team == DataStore.Teams.TeamTwo).Select(x => x.IUser.GetName() + " " + x.GetDisplayRanking()));
-
-		string replayString = string.Format(Resources.TeamLineups, team1String, team2String);
-
-		await SendEmbededMessageAsync(string.Format(Resources.GameModeVoteFinished, datastore.CurrentPug.Region.ToString(), datastore.CurrentPug.MapPicked.Name, mostVotedGameMode.Name, match.Id) + replayString);
-
-		ResetPug();		
+		StartMatch(mostVotedGameMode);	
 	}
 
 	async void StartMatch(GameModes gameMode)

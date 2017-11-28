@@ -12,4 +12,6 @@
 
 	public bool UseRegionEU { get; set; }
 	public bool UseRegionNA { get; set; }
+
+	public bool UseGameModes { get; set; }
 }

@@ -6,6 +6,7 @@
     "playersPerTeam": "5",
     "channelDisplayName": "pugs",
     "UseRegionEU": "true",
-    "UseRegionNA": "false"
+    "UseRegionNA": "false",
+    "UseGameModes": "false"
   }
 }
